@@ -43,7 +43,7 @@ async function mountMod(name, cfg) {
 }
 
 function sync() {
-  const s = createSettings().get();
+  const s = settings.get();
   document.documentElement.style.setProperty('--glass', String(s.glass ?? 0.55));
   for (const name of MODULES) {
     const cfg = (s.modules && s.modules[name]) || {};
@@ -54,9 +54,13 @@ function sync() {
   }
 }
 
-bus.on('settings', sync);
+// OBS docks and browser sources may not share localStorage (P0-A): the dock's
+// full settings arrive over the bus and are cached in this page's own storage,
+// so the overlay keeps working with the dock closed.
+bus.on('settings', (p) => { if (p && typeof p === 'object') settings.patch(p); else sync(); });
 settings.onChange(sync);
 sync();
+bus.emit('settings-request', {});
 </script>
 </body>
 </html>

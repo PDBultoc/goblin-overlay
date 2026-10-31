@@ -263,7 +263,15 @@ function boot() {
   bus.on('match-update', onM);
 
   // external changes (overlay/other tab): refresh controls not being edited
-  bus.on('settings', () => refreshers.forEach((f) => f()));
+  // Modules in the overlay write settings too (series, goal): adopt them so the
+  // panel never overwrites them from stale state.
+  bus.on('settings', (p) => {
+    if (p && typeof p === 'object') settings.patch(p);
+    refreshers.forEach((f) => f());
+  });
+  // An overlay that just loaded asks for the full settings (dock and source may
+  // not share storage in OBS).
+  bus.on('settings-request', () => bus.emit('settings', settings.get()));
 }
 
 if (typeof document !== 'undefined') boot();
