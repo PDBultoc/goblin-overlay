@@ -1,7 +1,7 @@
 // messages: Goblin's own free text box ("Total: 840$ / 5$ = 1v1 ranked or 1v1 vs you / ..."),
 // typed in the panel, several lines, shown as is.
 const CSS = `
-[data-mod=messages] .msgb{left:24px;top:150px;width:400px}
+[data-mod=messages] .msgb{left:6px;top:150px;width:400px}
 [data-mod=messages] .msgb .tx{padding:8px 16px 14px;font:600 19px/1.35 Inter,sans-serif;color:#eef5e8;white-space:pre-line;
   max-height:240px;overflow:hidden;animation:msgIn .5s cubic-bezier(.2,.9,.1,1) both}
 @keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}

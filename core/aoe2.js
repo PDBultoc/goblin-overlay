@@ -92,7 +92,10 @@ export function createPoller({
   setTimer = setTimeout,
   clearTimer = clearTimeout,
 } = {}) {
-  const url = `https://data.aoe2companion.com/api/matches?profile_ids=${profileId}&page=1`;
+  // Cloudflare caches this endpoint (s-maxage=3600, seen HIT with Age 48 s on 2026-10-31),
+  // which hid a running ranked game; a per-interval query value forces a fresh answer.
+  const baseUrl = `https://data.aoe2companion.com/api/matches?profile_ids=${profileId}&page=1`;
+  const url = () => `${baseUrl}&_=${Math.floor(Date.now() / (intervalSec * 1000))}`;
   const base = intervalSec * 1000;
   let prev = null;
   let latest = null;
@@ -113,7 +116,7 @@ export function createPoller({
     if (!running) return;
     let next = base;
     try {
-      const res = await fetchFn(url);
+      const res = await fetchFn(url());
       if (res.status === 429) {
         const ra = Number(res.headers && res.headers.get("retry-after"));
         if (Number.isFinite(ra) && ra > 0) next = ra * 1000;

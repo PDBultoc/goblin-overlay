@@ -49,7 +49,11 @@ export function createSettings(storage = globalThis.localStorage, key = 'goblin.
       const raw = storage.getItem(key);
       if (raw == null) return clone(DEFAULTS);
       const parsed = JSON.parse(raw);
-      return isObj(parsed) ? merge(DEFAULTS, parsed) : clone(DEFAULTS);
+      if (!isObj(parsed)) return clone(DEFAULTS);
+      // Saved by a version before _rev existed: these are real choices, so they
+      // must win over a fresh page that only has defaults (rev 0).
+      if (!parsed._rev) parsed._rev = 1;
+      return merge(DEFAULTS, parsed);
     } catch {
       return clone(DEFAULTS);
     }

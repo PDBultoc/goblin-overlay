@@ -9,9 +9,12 @@ const CSS = `
 [data-mod=challenges] .unl small{display:block;margin-top:3px;font-size:13px;letter-spacing:.14em;opacity:.85;overflow:hidden;text-overflow:ellipsis}
 [data-mod=challenges] .unl.out{animation:unlOut .4s ease-in forwards}
 /* bottom strip: between Goblin's left HUD box and the minimap, where his own goal bar sits today (Paul, 2026-10-31) */
-[data-mod=challenges] .ch.bottom{left:560px;top:952px;width:860px;height:96px}
-[data-mod=challenges] .ch.bottom .hd,[data-mod=challenges] .ch.bottom .tabs{width:300px}
-[data-mod=challenges] .ch.bottom .ct{left:330px;right:14px;top:16px;bottom:8px}
+/* x 900–1500: right of the game's selection panel, left of the minimap (Goblin's live HUD, 2026-10-31) */
+[data-mod=challenges] .ch.bottom{left:900px;top:952px;width:600px;height:96px}
+[data-mod=challenges] .ch.bottom .hd,[data-mod=challenges] .ch.bottom .tabs{width:250px}
+[data-mod=challenges] .ch.bottom .hd .t{white-space:nowrap;letter-spacing:.06em;font-size:14px}
+[data-mod=challenges] .ch.bottom .ct{left:270px;right:12px;top:16px;bottom:8px}
+[data-mod=challenges] .ch.bottom .tier li{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 [data-mod=challenges] .ch.bottom .unl{top:-34px}
 @keyframes unlStamp{from{transform:rotate(-14deg) scale(2.4);opacity:0}to{transform:rotate(-4deg) scale(1);opacity:1}}
 @keyframes unlOut{to{opacity:0;transform:rotate(-4deg) scale(.9)}}

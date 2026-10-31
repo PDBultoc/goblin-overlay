@@ -47,7 +47,7 @@ test("first poll: no events, status ok, next timer at interval", async () => {
   assert.deepEqual(events, []);
   assert.equal(statuses.at(-1).ok, true);
   assert.equal(statuses.at(-1).source, "aoe2");
-  assert.match(urls[0], /^https:\/\/data\.aoe2companion\.com\/api\/matches\?profile_ids=20186100&page=1$/);
+  assert.match(urls[0], /^https:\/\/data\.aoe2companion\.com\/api\/matches\?profile_ids=20186100&page=1&_=\d+$/);
   assert.equal(timers.q.length, 1);
   assert.equal(timers.q[0].ms, 20000);
   assert.equal(poller.latest().id, NEW_ID);
