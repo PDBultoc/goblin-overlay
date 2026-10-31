@@ -1,0 +1,50 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Goblin Overlay - setup</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@600;800&family=Inter:wght@400;600&display=swap');
+@page{size:A4;margin:0}
+*{box-sizing:border-box}
+html,body{margin:0;background:#0b0f0a;color:#e8f1e2;font:15px/1.5 Inter,Segoe UI,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pg{width:210mm;height:297mm;padding:22mm 20mm;position:relative;overflow:hidden}
+.pg::before{content:'';position:absolute;inset:0 0 auto 0;height:7mm;background:#a8ff1f}
+h1{font:800 34px/1 Oxanium,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#a8ff1f;margin:6mm 0 2mm}
+.sub{color:#9aa894;margin:0 0 10mm;font-size:14px}
+section{border:1px solid #2a3a22;background:#121a10;border-radius:6px;padding:6mm 7mm;margin-bottom:6mm}
+h2{font:800 18px/1 Oxanium,sans-serif;letter-spacing:.08em;text-transform:uppercase;margin:0 0 4mm;color:#fff}
+h2 span{display:inline-block;width:26px;height:26px;line-height:26px;text-align:center;background:#a8ff1f;color:#0b0f0a;border-radius:4px;margin-right:8px}
+ol,ul{margin:0;padding-left:6mm}
+li{margin:1.6mm 0}
+b{color:#fff}
+code{font:600 13px/1.4 Consolas,monospace;background:#0b0f0a;color:#a8ff1f;border:1px solid #2a3a22;border-radius:4px;padding:1px 6px;word-break:break-all}
+.end{position:absolute;left:20mm;right:20mm;bottom:16mm;font:800 20px Oxanium,sans-serif;color:#a8ff1f;text-transform:uppercase;letter-spacing:.06em}
+</style></head>
+<body><div class="pg">
+<h1>Goblin Overlay</h1>
+<p class="sub">Setup in Streamlabs Desktop · about 3 minutes</p>
+
+<section><h2><span>1</span>Overlay</h2><ol>
+<li><b>Sources</b> → <b>+</b> → <b>Browser Source</b></li>
+<li>URL: <code>https://pdbultoc.github.io/goblin-overlay/overlay.html</code></li>
+<li>Width <b>1920</b>, Height <b>1080</b></li>
+<li>Untick <b>Shutdown source when not visible</b></li>
+<li>Drag it above your game capture</li>
+</ol></section>
+
+<section><h2><span>2</span>Panel</h2><ol>
+<li><b>Layout Editor</b> → drag <b>Website</b> into a slot</li>
+<li>URL: <code>https://pdbultoc.github.io/goblin-overlay/panel.html</code></li>
+<li><b>Save</b></li>
+</ol></section>
+
+<section><h2><span>3</span>Use</h2><ul>
+<li>Switch each box on/off in the panel</li>
+<li>Showmatch: <b>series</b> → <b>Use current opponent</b></li>
+<li><b>monk</b> → <b>Start</b> / <b>Stop</b></li>
+</ul></section>
+
+<section><h2><span>!</span>Fix</h2><ul>
+<li>Nothing shows: source <b>Properties</b> → <b>Refresh cache of current page</b></li>
+</ul></section>
+
+<div class="end">Enjoy, Goblin!</div>
+</div></body></html>
