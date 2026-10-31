@@ -90,7 +90,11 @@ export function createSettings(storage = globalThis.localStorage, key = 'goblin.
       save(path);
     },
     patch(obj) {
-      if (!isObj(obj) || rev(obj) <= rev(state)) return; // stale or unversioned echo
+      if (!isObj(obj)) return;
+      // A page still on pure defaults (rev 0) takes whatever it is sent, even an
+      // unversioned snapshot from a panel that predates _rev (Goblin's panel kept
+      // old code until Streamlabs restarted). Otherwise only newer snapshots win.
+      if (rev(state) !== 0 && rev(obj) <= rev(state)) return;
       const next = merge(state, obj);
       // No-op when nothing changed: dock and overlay echo settings to each other,
       // and with shared storage every write fires a storage event on the other side.

@@ -61,6 +61,17 @@ test('a write on a stale instance keeps the newer stored change', () => {
   assert.deepEqual(after.modules.series.manual, { me: 1, opp: 0 });
 });
 
+test('an overlay on pure defaults adopts an unversioned snapshot from an old panel', () => {
+  const overlay = createSettings(memStorage());
+  const legacy = overlay.get();
+  delete legacy._rev;
+  legacy.modules.goal.current = 895;
+  legacy.modules.goal.target = 1000;
+  overlay.patch(legacy);
+  assert.equal(overlay.get().modules.goal.current, 895);
+  assert.equal(overlay.get().modules.goal.target, 1000);
+});
+
 test('stableJson ignores key order', () => {
   assert.equal(stableJson({ a: 1, b: { c: 2, d: 3 } }), stableJson({ b: { d: 3, c: 2 }, a: 1 }));
 });
