@@ -10,7 +10,7 @@
 <body>
 <div id="stage" class="gx"></div>
 <script type="module">
-import { createSettings } from './core/settings.js';
+import { createSettings, stableJson } from './core/settings.js';
 import { createBus } from './core/bus.js';
 import { MODULES } from './core/registry.js';
 
@@ -31,7 +31,7 @@ async function mountMod(name, cfg) {
   const layer = document.createElement('div');
   layer.dataset.mod = name;
   stage.appendChild(layer);
-  const entry = { layer, handle: null, cfgJson: JSON.stringify(cfg) };
+  const entry = { layer, handle: null, cfgJson: stableJson(cfg) };
   live.set(name, entry);
   try {
     const mod = await import('./modules/' + name + '.js');
@@ -50,7 +50,7 @@ function sync() {
     const m = live.get(name);
     if (!cfg.enabled) { unmountMod(name); continue; }
     if (!m) { mountMod(name, cfg); continue; }
-    if (m.cfgJson !== JSON.stringify(cfg)) { unmountMod(name); mountMod(name, cfg); }
+    if (m.cfgJson !== stableJson(cfg)) { unmountMod(name); mountMod(name, cfg); }
   }
 }
 

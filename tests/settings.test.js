@@ -51,7 +51,7 @@ test('onChange fires with path; patch and reset', () => {
   const off = s.onChange((path, settings) => calls.push([path, settings.glass]));
   s.set('glass', 0.8);
   assert.deepEqual(calls, [['glass', 0.8]]);
-  s.patch({ pollSec: 30 });
+  s.patch({ pollSec: 30, _rev: s.get()._rev + 1 });
   assert.equal(s.get().pollSec, 30);
   assert.equal(calls.length, 2);
   s.reset();

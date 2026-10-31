@@ -6,8 +6,8 @@ export const DEFAULTS = {
     matchbar: { enabled: true },
     series: { enabled: true, bestOf: 3, opponentId: null, since: null, manual: { me: 0, opp: 0 } },
     intro: { enabled: true, seconds: 3.5 }, result: { enabled: true }, civdelay: { enabled: true, minutes: 3 },
-    // goal + alerts start off: until the Streamlabs socket (T9) is wired, Goblin's own Streamlabs widgets cover them.
-    goal: { enabled: false, title: 'Goblin goal', current: 0, target: 100, source: 'manual' },
+    // alerts start off: until the Streamlabs socket (T9) is wired, Goblin's own Streamlabs alerts cover them.
+    goal: { enabled: true, title: 'Goblin goal', current: 0, target: 100, source: 'manual' },
     challenges: { enabled: true, position: 'bottom', rotateSec: 12, tiers: [
       { amount: 5, text: 'Play one game with a random civ' },
       { amount: 10, text: 'Only scouts until Castle Age' },
@@ -22,6 +22,13 @@ export const DEFAULTS = {
 
 const clone = (v) => JSON.parse(JSON.stringify(v));
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+// JSON with sorted object keys, so equal settings compare equal whatever the key order.
+export function stableJson(v) {
+  if (Array.isArray(v)) return '[' + v.map(stableJson).join(',') + ']';
+  if (isObj(v)) return '{' + Object.keys(v).sort().map((k) => JSON.stringify(k) + ':' + stableJson(v[k])).join(',') + '}';
+  return JSON.stringify(v ?? null);
+}
 
 // Deep-merge b over a (plain objects only; arrays and scalars are replaced).
 function merge(a, b) {
@@ -50,6 +57,14 @@ export function createSettings(storage = globalThis.localStorage, key = 'goblin.
 
   let state = load();
 
+  // Every local write gets a newer _rev; a snapshot from the other side is only
+  // taken when it is newer. Dock and overlay echo whole snapshots to each other,
+  // and an older one arriving late must never undo a newer change.
+  const rev = (s) => Number(s && s._rev) || 0;
+  function bump() { state._rev = Math.max(Date.now(), rev(state) + 1); }
+  // Shared storage (Streamlabs Desktop, browser): adopt a newer stored copy before writing.
+  function refresh() { const s = load(); if (rev(s) > rev(state)) state = s; }
+
   function save(path) {
     try { storage.setItem(key, JSON.stringify(state)); } catch { /* quota/unavailable: keep in memory */ }
     for (const fn of [...listeners]) fn(path, clone(state));
@@ -60,6 +75,8 @@ export function createSettings(storage = globalThis.localStorage, key = 'goblin.
     set(path, value) {
       const parts = String(path).split('.');
       if (parts.some((p) => p === '__proto__' || p === 'constructor' || p === 'prototype')) return;
+      refresh();
+      bump();
       let o = state;
       for (let i = 0; i < parts.length - 1; i++) {
         if (!isObj(o[parts[i]])) o[parts[i]] = {};
@@ -69,7 +86,12 @@ export function createSettings(storage = globalThis.localStorage, key = 'goblin.
       save(path);
     },
     patch(obj) {
-      state = merge(state, obj);
+      if (!isObj(obj) || rev(obj) <= rev(state)) return; // stale or unversioned echo
+      const next = merge(state, obj);
+      // No-op when nothing changed: dock and overlay echo settings to each other,
+      // and with shared storage every write fires a storage event on the other side.
+      if (stableJson(next) === stableJson(state)) return;
+      state = next;
       save('*');
     },
     onChange(fn) {
