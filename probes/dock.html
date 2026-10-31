@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><title>Probe dock</title>
+<style>body{font:16px sans-serif;background:#111;color:#cfc;padding:12px}button{font-size:18px;padding:8px 14px}</style>
+<h3>Probe: dock</h3><button id="b">Toggle</button><p id="s">value: ?</p>
+<script>
+const bc = new BroadcastChannel('goblin-probe');
+let v = localStorage.getItem('goblin-probe') === '1';
+const show = () => document.getElementById('s').textContent = 'value: ' + (v ? 'ON' : 'OFF') + ' @ ' + new Date().toLocaleTimeString();
+document.getElementById('b').onclick = () => { v = !v; localStorage.setItem('goblin-probe', v ? '1' : '0'); bc.postMessage({ v, t: Date.now() }); show(); };
+show();
+</script>

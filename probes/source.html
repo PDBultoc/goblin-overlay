@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8"><title>Probe source</title>
+<style>body{margin:0;background:transparent;font:28px sans-serif;color:#fff}div{margin:40px;padding:20px;background:#000a;display:inline-block}b{color:#7f7}</style>
+<div>BroadcastChannel: <b id="bc">waiting</b><br>localStorage (poll 1s): <b id="ls">?</b><br>storage event: <b id="se">waiting</b></div>
+<script>
+const $ = id => document.getElementById(id), now = () => new Date().toLocaleTimeString();
+new BroadcastChannel('goblin-probe').onmessage = e => $('bc').textContent = (e.data.v ? 'ON' : 'OFF') + ' @ ' + now();
+addEventListener('storage', e => { if (e.key === 'goblin-probe') $('se').textContent = (e.newValue === '1' ? 'ON' : 'OFF') + ' @ ' + now(); });
+setInterval(() => { const x = localStorage.getItem('goblin-probe'); $('ls').textContent = x === null ? 'empty' : (x === '1' ? 'ON' : 'OFF'); }, 1000);
+</script>

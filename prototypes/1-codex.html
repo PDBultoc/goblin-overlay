@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Goblin Codex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,500;0,700;1,500&family=Pirata+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f0b07; --vellum:#1d160d; --vellum2:#2a2014;
+  --gold:#d6b25e; --gold-hi:#f6e3a1; --gold-lo:#8a6a2a;
+  --vert:#4f9a1e; --acid:#9cff2e; --gules:#9b2b22;
+  --text:#f1e6cc; --muted:#b9a780;
+  --accent:var(--acid);
+}
+#go-root.monk{ --accent:#e8c27a; --vert:#7a5230; --acid:#f0d9a6; }
+#go-root{font-family:'EB Garamond',serif;color:var(--text)}
+#go-root *{box-sizing:border-box}
+.vellum{
+  background:
+    radial-gradient(120% 90% at 50% 0%, #3a2c1a55, transparent 60%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 .9  0 0 0 0 .75  0 0 0 0 .5  0 0 0 .09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    linear-gradient(160deg,var(--vellum2),var(--vellum) 55%,#120d07);
+  border:1.5px solid var(--gold-lo);
+  box-shadow:0 0 0 1px #000a, inset 0 0 0 4px #0008, inset 0 0 0 5px #d6b25e44, 0 18px 40px #000b;
+}
+.gold-text{background:linear-gradient(180deg,var(--gold-hi),var(--gold) 55%,var(--gold-lo));-webkit-background-clip:text;background-clip:text;color:transparent}
+.corner{position:absolute;width:34px;height:34px;pointer-events:none}
+.corner.tl{left:-9px;top:-9px}.corner.tr{right:-9px;top:-9px;transform:scaleX(-1)}
+.corner.bl{left:-9px;bottom:-9px;transform:scaleY(-1)}.corner.br{right:-9px;bottom:-9px;transform:scale(-1)}
+
+/* ---------- Scoreboard ---------- */
+#score{position:absolute;left:50%;top:62px;transform:translateX(-50%);display:flex;align-items:center;gap:0;height:66px}
+#score .side{height:52px;display:flex;align-items:center;gap:12px;padding:0 18px;min-width:230px}
+#score .side.g{clip-path:polygon(16px 0,100% 0,100% 100%,16px 100%,0 50%);justify-content:flex-end;padding-left:30px}
+#score .side.o{clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%);padding-right:30px}
+#score .name{font:700 22px/1 'Cinzel',serif;letter-spacing:.04em}
+#score .civ{font:italic 500 16px/1 'EB Garamond';color:var(--muted);margin-top:3px}
+#score .who{display:flex;flex-direction:column}
+#score .side.g .who{align-items:flex-end}
+#score .mid{position:relative;width:170px;height:66px;display:flex;align-items:center;justify-content:center;gap:14px;z-index:2}
+#score .mid::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,#2a2014,#140e08);
+  clip-path:polygon(14% 0,86% 0,100% 50%,86% 100%,14% 100%,0 50%);border:0}
+#score .mid::after{content:'';position:absolute;inset:3px;clip-path:polygon(14% 0,86% 0,100% 50%,86% 100%,14% 100%,0 50%);
+  box-shadow:inset 0 0 0 2px var(--gold);background:transparent}
+.num{position:relative;z-index:1;font:900 40px/1 'Cinzel',serif;width:34px;text-align:center;perspective:400px}
+.num span{display:inline-block}
+.num.pop span{animation:numflip .9s cubic-bezier(.2,.8,.2,1)}
+@keyframes numflip{0%{transform:rotateX(90deg) scale(1.6);filter:brightness(3)}60%{transform:rotateX(-12deg) scale(1.1)}100%{transform:none}}
+#score .dash{position:relative;z-index:1;color:var(--gold);font:700 18px 'Cinzel'}
+#score .meta{position:absolute;top:66px;left:50%;transform:translateX(-50%);white-space:nowrap;
+  font:700 12px/1 'Cinzel';letter-spacing:.3em;color:var(--gold);padding:6px 14px 5px;background:#120d08e6;border:1px solid var(--gold-lo);border-top:0;border-radius:0 0 6px 6px}
+.shield{width:38px;height:44px;flex:none;filter:drop-shadow(0 2px 3px #000)}
+#score .flash{position:absolute;inset:-20px;pointer-events:none;z-index:3}
+
+/* ---------- Cam ---------- */
+#cam{position:absolute;left:24px;top:640px;width:400px;height:225px}
+#cam .frame{position:absolute;inset:0;border-radius:4px;
+  box-shadow:0 0 0 3px #120d07, 0 0 0 5px var(--gold), 0 0 0 7px #120d07, 0 0 0 8px var(--gold-lo), 0 20px 40px #000c}
+#cam .feed{position:absolute;inset:0;background:repeating-linear-gradient(135deg,#ffffff06 0 12px,#0000 12px 24px),radial-gradient(70% 90% at 50% 40%,#2a2218,#0d0a07);
+  display:grid;place-items:center;font:700 14px 'Cinzel';letter-spacing:.4em;color:#ffffff33;border-radius:4px}
+#cam .plate{position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);padding:7px 22px 6px;white-space:nowrap;
+  font:700 17px/1 'Cinzel';letter-spacing:.12em;z-index:3}
+#cam .plate b{color:var(--accent)}
+#goblin{position:absolute;right:26px;top:-74px;width:120px;height:100px;z-index:1;transform-origin:50% 100%;animation:peek 9s ease-in-out infinite}
+@keyframes peek{0%,70%,100%{transform:translateY(0)}76%{transform:translateY(-8px) rotate(-4deg)}84%{transform:translateY(-6px) rotate(3deg)}}
+#goblin .ear-l{transform-origin:36px 56px;animation:twitch 7s infinite}
+#goblin .ear-r{transform-origin:84px 56px;animation:twitch 7s 3.4s infinite}
+@keyframes twitch{0%,94%,100%{transform:none}96%{transform:rotate(-9deg)}98%{transform:rotate(5deg)}}
+#goblin .eye{animation:blink 5s infinite}
+@keyframes blink{0%,95%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+#goblin .hood{opacity:0;transition:opacity .6s}
+#go-root.monk #goblin .hood{opacity:1}
+.claw{position:absolute;top:-6px;width:22px;height:12px;z-index:4}
+
+/* ---------- Goal ---------- */
+#goal{position:absolute;left:24px;top:512px;width:400px;height:46px;padding:0 16px;display:flex;align-items:center;gap:12px}
+#goal .label{font:700 15px/1 'Cinzel';letter-spacing:.08em;white-space:nowrap}
+#goal .track{position:relative;flex:1;height:10px;border-radius:5px;background:#0009;box-shadow:inset 0 1px 2px #000,0 0 0 1px var(--gold-lo)}
+#goal .fill{position:absolute;left:0;top:0;bottom:0;border-radius:5px;width:0;
+  background:linear-gradient(90deg,#2f6b12,var(--vert) 60%,var(--acid));box-shadow:inset 0 1px 0 #ffffff40;transition:width 1.6s cubic-bezier(.2,.8,.2,1)}
+#goal .seal{position:absolute;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;left:0;transition:left 1.6s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 2px 2px #000)}
+#goal .amt{font:700 16px/1 'Cinzel';white-space:nowrap}
+#goal .amt small{color:var(--muted);font-weight:500}
+#goal.surge .fill{animation:surge 1.6s}
+@keyframes surge{0%,100%{filter:none}30%{filter:brightness(2.2) saturate(1.5)}}
+
+/* ---------- Chat ---------- */
+#chat{position:absolute;left:1500px;top:300px;width:396px;height:340px;padding:18px 18px 14px;overflow:hidden;display:flex;flex-direction:column}
+#chat h4,#decree h4{margin:0 0 8px;font:700 13px/1 'Cinzel';letter-spacing:.35em;color:var(--gold);display:flex;align-items:center;gap:10px}
+#chat h4::after,#decree h4::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--gold-lo),transparent)}
+#msgs{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:9px;
+  mask-image:linear-gradient(transparent,#000 22%);-webkit-mask-image:linear-gradient(transparent,#000 22%)}
+.msg{display:flex;gap:10px;align-items:flex-start;font:500 19px/1.25 'EB Garamond';animation:ink .9s cubic-bezier(.3,.7,.2,1) both}
+.msg .cap{flex:none;width:30px;height:30px;display:grid;place-items:center;font:400 24px/1 'Pirata One';color:#120d07;border-radius:3px;
+  box-shadow:inset 0 0 0 1.5px #0007,0 0 0 1px var(--gold)}
+.msg .u{font-weight:700;margin-right:6px}
+@keyframes ink{from{clip-path:inset(0 100% 0 0);opacity:.2}to{clip-path:inset(0 0 0 0);opacity:1}}
+
+/* ---------- Decree (challenges) ---------- */
+#decree{position:absolute;left:1500px;top:660px;width:396px;height:205px;padding:18px 18px 16px;overflow:hidden;perspective:900px}
+#decree .page{position:absolute;left:18px;right:18px;top:44px;bottom:16px;transform-origin:0 50%;animation:pagein .7s cubic-bezier(.2,.8,.2,1) both}
+#decree .page.out{animation:pageout .6s ease-in both}
+@keyframes pagein{from{transform:rotateY(80deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes pageout{to{transform:rotateY(-80deg);opacity:0}}
+#decree .price{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+#decree .price b{font:900 30px/1 'Cinzel';color:var(--accent);text-shadow:0 2px 0 #000}
+#decree .price span{font:italic 500 16px/1 'EB Garamond';color:var(--muted)}
+#decree ul{margin:0;padding:0;list-style:none}
+#decree li{font:500 19px/1.35 'EB Garamond';padding-left:22px;position:relative}
+#decree li::before{content:'';position:absolute;left:2px;top:.55em;width:9px;height:9px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 0 2px #120d07,0 0 0 3px var(--gold-lo)}
+#decree .dots{position:absolute;right:18px;top:18px;display:flex;gap:5px}
+#decree .dots i{width:7px;height:7px;border-radius:50%;background:#ffffff22}
+#decree .dots i.on{background:var(--gold)}
+
+/* ---------- Alerts ---------- */
+#alert{position:absolute;left:50%;top:150px;width:820px;transform:translateX(-50%);pointer-events:none}
+#alert .rod{height:16px;border-radius:8px;background:linear-gradient(180deg,var(--gold-hi),var(--gold) 50%,var(--gold-lo));
+  box-shadow:0 4px 10px #000c;transform:scaleX(0);position:relative;z-index:2}
+#alert .rod::before,#alert .rod::after{content:'';position:absolute;top:-4px;width:24px;height:24px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,var(--gold-hi),var(--gold-lo));box-shadow:0 2px 4px #000}
+#alert .rod::before{left:-12px}#alert .rod::after{right:-12px}
+#alert .cloth{margin:0 34px;transform-origin:top;transform:scaleY(0);padding:26px 40px 34px;text-align:center;position:relative;
+  clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 22px),0 100%)}
+#alert .kicker{font:700 16px/1 'Cinzel';letter-spacing:.5em;color:var(--accent)}
+#alert .title{font:900 46px/1.1 'Cinzel';margin:10px 0 6px}
+#alert .body{font:italic 500 24px/1.3 'EB Garamond';color:var(--text)}
+#alert .stamp{position:absolute;right:30px;bottom:34px;padding:6px 12px;border:3px double var(--acid);color:var(--acid);
+  font:900 18px/1 'Cinzel';letter-spacing:.12em;transform:rotate(9deg) scale(3);opacity:0}
+#alert.show .rod{animation:rod .5s cubic-bezier(.2,.9,.2,1) forwards}
+#alert.show .cloth{animation:unfurl .8s .35s cubic-bezier(.2,.9,.2,1) forwards}
+#alert.show .stamp.on{animation:stamp .45s 1.3s cubic-bezier(.3,1.6,.5,1) forwards}
+#alert.hide .cloth{animation:furl .5s forwards}#alert.hide .rod{animation:rodout .4s .4s forwards}
+@keyframes rod{to{transform:scaleX(1)}}@keyframes rodout{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes unfurl{0%{transform:scaleY(0)}70%{transform:scaleY(1.04)}100%{transform:scaleY(1)}}
+@keyframes furl{from{transform:scaleY(1)}to{transform:scaleY(0)}}
+@keyframes stamp{to{transform:rotate(9deg) scale(1);opacity:1}}
+.spark{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--gold-hi);box-shadow:0 0 8px var(--gold);pointer-events:none}
+
+/* ---------- Intro ---------- */
+#intro{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:0;pointer-events:none;opacity:0}
+#intro.show{opacity:1}
+#intro .veil{position:absolute;inset:0;background:radial-gradient(60% 60% at 50% 45%,#000a,#000d);opacity:0;transition:opacity .5s}
+#intro.show .veil{opacity:1}
+#intro .card{position:relative;width:520px;height:400px;padding:36px;display:flex;flex-direction:column;align-items:center;text-align:center;opacity:0}
+#intro .card .shield{width:120px;height:140px;margin-bottom:18px}
+#intro .card .n{font:900 34px/1.1 'Cinzel'}
+#intro .card .c{font:italic 500 24px/1.2 'EB Garamond';color:var(--muted);margin-top:6px}
+#intro .card .e{font:700 18px/1 'Cinzel';letter-spacing:.2em;color:var(--gold);margin-top:14px}
+#intro .card .s{font:900 64px/1 'Cinzel';margin-top:auto}
+#intro.show .card.l{animation:slamL .7s .15s cubic-bezier(.2,1.3,.4,1) forwards}
+#intro.show .card.r{animation:slamR .7s .15s cubic-bezier(.2,1.3,.4,1) forwards}
+@keyframes slamL{from{opacity:0;transform:translateX(-700px) rotate(-6deg)}to{opacity:1;transform:none}}
+@keyframes slamR{from{opacity:0;transform:translateX(700px) rotate(6deg)}to{opacity:1;transform:none}}
+#intro .vs{position:relative;width:200px;height:200px;margin:0 -10px;z-index:3;display:grid;place-items:center;opacity:0}
+#intro.show .vs{animation:vs .6s .7s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes vs{from{opacity:0;transform:scale(2.6) rotate(-20deg)}to{opacity:1;transform:none}}
+#intro .vs b{position:absolute;font:900 54px 'Cinzel';z-index:2}
+#intro .tag{position:absolute;top:210px;left:50%;transform:translateX(-50%);font:700 18px 'Cinzel';letter-spacing:.5em;color:var(--gold);opacity:0}
+#intro.show .tag{animation:fadein .6s 1s forwards}
+#intro.out{transition:opacity .5s;opacity:0}
+@keyframes fadein{to{opacity:1}}
+
+/* ---------- Monk mode ---------- */
+#monk{position:absolute;left:24px;top:450px;width:400px;height:46px;display:flex;align-items:center;gap:12px;padding:0 16px;
+  opacity:0;transform:translateX(-40px);transition:.6s cubic-bezier(.2,.9,.2,1)}
+#go-root.monk #monk{opacity:1;transform:none}
+#monk .t{font:700 15px/1 'Cinzel';letter-spacing:.1em}
+#monk .clock{margin-left:auto;font:900 24px/1 'Cinzel';color:var(--accent);font-variant-numeric:tabular-nums}
+#wololo{position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:linear-gradient(100deg,transparent 30%,#ffd98a55 45%,#ff6ad566 50%,#6ad5ff55 55%,transparent 70%);background-size:300% 100%}
+#wololo.go{animation:wol 2.2s ease-in-out}
+@keyframes wol{0%{opacity:1;background-position:100% 0}100%{opacity:1;background-position:-50% 0}}
+#wololo span{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);font:400 150px/1 'Pirata One';color:#fff;
+  text-shadow:0 0 30px #ffd98a,0 0 60px #ff6ad5;opacity:0;letter-spacing:.04em}
+#wololo.go span{animation:wtext 2.2s ease-out}
+@keyframes wtext{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}20%{opacity:1}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.25)}}
+#go-root.monk .vellum{transition:filter 1s;filter:sepia(.25) hue-rotate(-8deg)}
+</style>
+</head>
+<body>
+<script src="shared.js"></script>
+<script>
+GO.mount();
+const S = GO.state, R = GO.root;
+
+/* ---------- SVG parts ---------- */
+const corner = `<svg class="corner" viewBox="0 0 34 34"><path d="M2 32V10a8 8 0 0 1 8-8h22" fill="none" stroke="#d6b25e" stroke-width="2"/>
+  <path d="M7 32V13a6 6 0 0 1 6-6h19" fill="none" stroke="#8a6a2a" stroke-width="1"/>
+  <circle cx="10" cy="10" r="4.5" fill="#120d07" stroke="#d6b25e" stroke-width="1.6"/><circle cx="10" cy="10" r="1.6" fill="#9cff2e"/></svg>`;
+const corners = ['tl','tr','bl','br'].map(c => corner.replace('class="corner"', `class="corner ${c}"`)).join('');
+
+function shield(kind, cls = 'shield') {
+  const body = 'M4 4h92v46c0 32-22 52-46 64C26 102 4 82 4 50z';
+  if (kind === 'goblin') return `<svg class="${cls}" viewBox="0 0 100 118"><defs>
+    <linearGradient id="vg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fc52b"/><stop offset="1" stop-color="#2c6410"/></linearGradient></defs>
+    <path d="${body}" fill="url(#vg)" stroke="#d6b25e" stroke-width="5"/>
+    <path d="${body}" fill="none" stroke="#120d07" stroke-width="1.5" transform="translate(50 59) scale(.88) translate(-50 -59)"/>
+    <g transform="translate(14 22) scale(.6)" fill="#0d1108">${goblinShape()}</g></svg>`;
+  return `<svg class="${cls}" viewBox="0 0 100 118">
+    <path d="${body}" fill="#9b2b22" stroke="#d6b25e" stroke-width="5"/>
+    <path d="M4 40 L50 72 L96 40 L96 56 L50 88 L4 56Z" fill="#d6b25e" opacity=".9"/>
+    <circle cx="50" cy="30" r="10" fill="#f1e6cc" opacity=".85"/></svg>`;
+}
+function goblinShape(eyes = '#9cff2e') {
+  return `<path class="ear-l" d="M38 56 L2 30 L16 45 L3 48 L36 66Z"/>
+    <path class="ear-r" d="M82 56 L118 30 L104 45 L117 48 L84 66Z"/>
+    <path d="M46 34 L51 14 L57 31Z M63 31 L69 12 L74 34Z"/>
+    <path d="M60 28C40 28 33 44 33 60C33 79 46 92 60 92C74 92 87 79 87 60C87 44 80 28 60 28Z"/>
+    <g fill="${eyes}"><ellipse class="eye" cx="49" cy="58" rx="6.5" ry="3.2" transform="rotate(14 49 58)"/>
+    <ellipse class="eye" cx="71" cy="58" rx="6.5" ry="3.2" transform="rotate(-14 71 58)"/></g>
+    <path d="M44 72Q60 86 76 72Q60 79 44 72Z" fill="${eyes}" opacity=".85"/>
+    <path d="M50 75l2 6 2-5zM66 75l2 5 2-6z" fill="#f1e6cc"/>`;
+}
+const sealSvg = `<svg class="seal" viewBox="0 0 26 26"><path d="M13 1l3 3 4-1 1 4 4 2-2 4 2 4-4 2-1 4-4-1-3 3-3-3-4 1-1-4-4-2 2-4-2-4 4-2 1-4 4 1z" fill="#3c7d14" stroke="#1e3f09"/>
+  <circle cx="13" cy="13" r="6" fill="none" stroke="#9cff2e" stroke-width="1.2" opacity=".8"/><text x="13" y="16.5" font-family="Pirata One" font-size="10" text-anchor="middle" fill="#d9ff9e">G</text></svg>`;
+const axes = `<svg viewBox="0 0 200 200" width="200" height="200" style="position:absolute;inset:0">
+  <g stroke="#120d07" stroke-width="2"><g transform="rotate(-40 100 100)"><rect x="96" y="20" width="8" height="160" rx="3" fill="#6b4a26"/>
+  <path d="M104 30 C140 30 150 55 146 80 C130 70 118 68 104 72Z" fill="#c9ccd1"/></g>
+  <g transform="rotate(40 100 100) scale(-1 1) translate(-200 0)"><rect x="96" y="20" width="8" height="160" rx="3" fill="#6b4a26"/>
+  <path d="M104 30 C140 30 150 55 146 80 C130 70 118 68 104 72Z" fill="#c9ccd1"/></g></g>
+  <circle cx="100" cy="100" r="46" fill="#120d07" stroke="#d6b25e" stroke-width="4"/></svg>`;
+
+/* ---------- Build ---------- */
+R.innerHTML = `
+<div id="score">
+  <div class="side g vellum">
+    <div class="who"><div class="name gold-text">${S.goblin.short}</div><div class="civ">${S.goblin.civ}</div></div>
+    ${shield('goblin')}
+  </div>
+  <div class="mid"><div class="num" id="sg"><span>${S.goblin.score}</span></div><div class="dash">⁘</div><div class="num" id="so"><span>${S.opp.score}</span></div></div>
+  <div class="side o vellum">
+    ${shield('opp')}
+    <div class="who"><div class="name">${S.opp.short}</div><div class="civ">${S.opp.civ}</div></div>
+  </div>
+  <div class="meta">BEST OF ${S.bestOf} · ${S.map.toUpperCase()}</div>
+</div>
+
+<div id="monk" class="vellum">${corners}
+  <svg width="26" height="26" viewBox="0 0 26 26"><path d="M13 2C7 2 4 8 4 13v11h18V13c0-5-3-11-9-11z" fill="#7a5230" stroke="#e8c27a"/><ellipse cx="13" cy="14" rx="5" ry="6" fill="#120d07"/></svg>
+  <div class="t">MONK MODE <span style="color:var(--muted);font-weight:500">· the Goblin is robed</span></div><div class="clock" id="mclock">60:00</div>
+</div>
+
+<div id="goal" class="vellum">${corners}
+  <div class="label gold-text">${S.goal.title}</div>
+  <div class="track"><div class="fill"></div>${sealSvg}</div>
+  <div class="amt" id="gamt"></div>
+</div>
+
+<div id="cam">
+  <svg id="goblin" viewBox="0 0 120 100"><g fill="#0b0e07">${goblinShape()}</g>
+    <path class="hood" d="M60 6C30 6 22 40 24 70L36 96H84L96 70C98 40 90 6 60 6Z M60 30C44 30 38 44 38 60C38 78 48 90 60 90C72 90 82 78 82 60C82 44 76 30 60 30Z" fill="#6b4626" stroke="#e8c27a" stroke-width="2" fill-rule="evenodd"/></svg>
+  <svg class="claw" style="right:76px" viewBox="0 0 22 12"><path d="M1 12C2 5 5 2 7 2l1 7 2-8 2 8 2-8 1 8c3 0 5 2 6 3z" fill="#0b0e07"/></svg>
+  <svg class="claw" style="right:34px" viewBox="0 0 22 12"><path d="M1 12C2 5 5 2 7 2l1 7 2-8 2 8 2-8 1 8c3 0 5 2 6 3z" fill="#0b0e07"/></svg>
+  <div class="feed">CAM</div><div class="frame"></div>
+  <div class="plate vellum">${corners}<span class="gold-text">Swedish</span><b>Goblin</b></div>
+</div>
+
+<div id="chat" class="vellum">${corners}<h4>THE SCRIPTORIUM</h4><div id="msgs"></div></div>
+
+<div id="decree" class="vellum">${corners}<h4>FORCE THE GOBLIN</h4><div class="dots"></div></div>
+
+<div id="alert"><div class="rod"></div><div class="cloth vellum"><div class="kicker"></div><div class="title gold-text"></div><div class="body"></div><div class="stamp">DECREED</div></div></div>
+
+<div id="intro"><div class="veil"></div>
+  <div class="card l vellum">${corners}${shield('goblin')}<div class="n gold-text">${S.goblin.name}</div><div class="c">${S.goblin.civ}</div><div class="e">ELO ${S.goblin.elo}</div><div class="s gold-text" id="isg"></div></div>
+  <div class="vs">${axes}<b class="gold-text">VS</b></div>
+  <div class="card r vellum">${corners}${shield('opp')}<div class="n">${S.opp.name}</div><div class="c">${S.opp.civ}</div><div class="e">ELO ${S.opp.elo}</div><div class="s" id="iso"></div></div>
+  <div class="tag">GAME ${S.goblin.score + S.opp.score + 1} · ${S.map.toUpperCase()}</div>
+</div>
+
+<div id="wololo"><span>Wololo!</span></div>`;
+
+const $ = s => R.querySelector(s);
+
+/* ---------- Goal ---------- */
+function renderGoal() {
+  const p = Math.min(1, S.goal.current / S.goal.target);
+  $('#goal .fill').style.width = p * 100 + '%';
+  $('#goal .seal').style.left = p * 100 + '%';
+  $('#gamt').innerHTML = `${GO.fmtMoney(S.goal.current)} <small>/ ${GO.fmtMoney(S.goal.target)}</small>`;
+}
+renderGoal();
+
+/* ---------- Score ---------- */
+function bump(id, val) {
+  const el = $(id); el.innerHTML = `<span>${val}</span>`; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  sparks(el, 26);
+}
+function sparks(el, n) {
+  const st = document.getElementById('go-stage').getBoundingClientRect(), r = el.getBoundingClientRect(), k = st.width / GO.W;
+  const cx = (r.left + r.width / 2 - st.left) / k, cy = (r.top + r.height / 2 - st.top) / k;
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('i'); s.className = 'spark'; R.appendChild(s);
+    const a = Math.random() * Math.PI * 2, d = 40 + Math.random() * 120;
+    s.style.left = cx + 'px'; s.style.top = cy + 'px';
+    s.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 },
+               { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d + 40}px) scale(.2)`, opacity: 0 }],
+              { duration: 700 + Math.random() * 700, easing: 'cubic-bezier(.2,.7,.3,1)' }).onfinish = () => s.remove();
+  }
+}
+GO.on('score', (p, s) => bump(p.side === 'goblin' ? '#sg' : '#so', s[p.side].score));
+
+/* ---------- Chat ---------- */
+GO.on('chat', ({ user, color, text }) => {
+  const box = $('#msgs'), m = document.createElement('div'); m.className = 'msg';
+  m.innerHTML = `<div class="cap" style="background:${color}">${user[0].toUpperCase()}</div><div><span class="u" style="color:${color}">${user}</span>${text}</div>`;
+  box.appendChild(m); while (box.children.length > 6) box.firstChild.remove();
+});
+
+/* ---------- Decrees ---------- */
+let tier = 0;
+const dots = $('#decree .dots'); dots.innerHTML = S.challenges.map(() => '<i></i>').join('');
+function showTier(i) {
+  const old = $('#decree .page:not(.out)'); if (old) { old.classList.add('out'); setTimeout(() => old.remove(), 700); }
+  const c = S.challenges[i], pg = document.createElement('div'); pg.className = 'page';
+  pg.innerHTML = `<div class="price"><b>${c.price}</b><span>${c.alt}</span></div><ul>${c.items.map(t => `<li>${t}</li>`).join('')}</ul>`;
+  $('#decree').appendChild(pg);
+  [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
+}
+showTier(0); setInterval(() => showTier(tier = (tier + 1) % S.challenges.length), 6500);
+
+/* ---------- Alerts (queued) ---------- */
+const q = []; let busy = false;
+function alert(kicker, title, body, stamp) { q.push([kicker, title, body, stamp]); if (!busy) next(); }
+function next() {
+  const a = q.shift(); if (!a) { busy = false; return; } busy = true;
+  const el = $('#alert');
+  el.querySelector('.kicker').textContent = a[0]; el.querySelector('.title').textContent = a[1];
+  el.querySelector('.body').textContent = a[2] || '';
+  const st = el.querySelector('.stamp'); st.textContent = a[3] || ''; st.classList.toggle('on', !!a[3]);
+  el.className = ''; void el.offsetWidth; el.classList.add('show');
+  setTimeout(() => sparks(el.querySelector('.title'), 30), 900);
+  setTimeout(() => { el.classList.add('hide'); }, 4400);
+  setTimeout(() => { el.className = ''; next(); }, 5400);
+}
+GO.on('follow', p => alert('A NEW BANNERMAN', p.name, 'has sworn fealty to the Goblin'));
+GO.on('sub', p => alert('SUBSCRIBED · ' + p.months + ' MONTH' + (p.months > 1 ? 'S' : ''), p.name, `${S.subs.current} of ${S.subs.target} goblins in the warband`));
+GO.on('donation', p => {
+  alert(`TRIBUTE OF ${GO.fmtMoney(p.amount)}`, p.name, p.msg ? `“${p.msg}”` : '', p.challenge ? 'DECREED: ' + p.challenge.toUpperCase() : '');
+  renderGoal(); const g = $('#goal'); g.classList.remove('surge'); void g.offsetWidth; g.classList.add('surge');
+  setTimeout(() => sparks($('#goal .seal'), 18), 900);
+});
+
+/* ---------- Intro ---------- */
+GO.on('intro', () => {
+  const el = $('#intro'); $('#isg').textContent = S.goblin.score; $('#iso').textContent = S.opp.score;
+  el.querySelector('.tag').textContent = `GAME ${S.goblin.score + S.opp.score + 1} · ${S.map.toUpperCase()}`;
+  el.className = ''; void el.offsetWidth; el.classList.add('show');
+  setTimeout(() => sparks(el.querySelector('.vs'), 40), 800);
+  setTimeout(() => el.classList.add('out'), 3800);
+  setTimeout(() => el.className = '', 4400);
+});
+
+/* ---------- Monk mode ---------- */
+let mt;
+GO.on('monk', p => {
+  R.classList.toggle('monk', p.active);
+  if (p.active) {
+    const w = $('#wololo'); w.className = ''; void w.offsetWidth; w.classList.add('go');
+    alert('THE 15$ DECREE', 'Monk Mode', `${p.name} has robed the Goblin for one hour`);
+    clearInterval(mt); mt = setInterval(() => $('#mclock').textContent = GO.fmtClock(S.monk.endsAt - Date.now()), 500);
+  } else clearInterval(mt);
+});
+</script>
+</body>
+</html>

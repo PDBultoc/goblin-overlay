@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SwedishGoblin overlay - 3 Minimal / Nordic glass</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+@property --ac { syntax: '<color>'; inherits: true; initial-value: #8BE82A; }
+:root {
+  --ac: #8BE82A;
+  --fg: #eef2ea;
+  --dim: rgba(238,242,234,.62);
+  --glass: rgba(9,13,11,.46);
+  --rim: rgba(255,255,255,.14);
+  --ui: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --disp: 'Instrument Serif', Georgia, serif;
+  transition: --ac 1.4s ease;
+}
+:root.monk { --ac: #F0A03C; }
+
+#go-root { font-family: var(--ui); color: var(--fg); font-size: 18px; -webkit-font-smoothing: antialiased; }
+#go-root * { box-sizing: border-box; }
+.abs { position: absolute; }
+.glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(16px) saturate(1.25);
+  backdrop-filter: blur(16px) saturate(1.25);
+  border: 1px solid var(--rim);
+  box-shadow: 0 8px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.07);
+}
+.caps { text-transform: uppercase; letter-spacing: .2em; font-weight: 500; }
+.dim { color: var(--dim); }
+.ac { color: var(--ac); }
+
+/* ---------- scoreboard ---------- */
+#score { left: 50%; top: 64px; height: 42px; transform: translateX(-50%); border-radius: 21px;
+  display: flex; align-items: center; padding: 0 22px; gap: 18px; white-space: nowrap; }
+#score .side { display: flex; align-items: baseline; gap: 10px; }
+#score .side.r { flex-direction: row-reverse; }
+#score .nm { font-size: 18px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
+#score .civ { font-size: 18px; color: var(--dim); letter-spacing: .04em; font-style: italic; font-family: var(--disp); font-size: 20px; }
+#score .nums { display: flex; align-items: center; gap: 12px; font-size: 26px; font-weight: 500; line-height: 1; }
+#score .dash { width: 14px; height: 1px; background: var(--dim); }
+.roll { display: inline-block; height: 1em; overflow: hidden; position: relative; width: .7em; text-align: center; }
+.roll span { position: absolute; left: 0; right: 0; top: 0; transition: transform .5s cubic-bezier(.2,.8,.2,1), opacity .5s; }
+#score .meta { padding-left: 18px; border-left: 1px solid var(--rim); font-size: 16px; color: var(--dim); }
+#score .meta b { color: var(--ac); font-weight: 500; }
+#score .pip { color: var(--ac); }
+
+/* ---------- cam ---------- */
+#cam { left: 24px; top: 640px; width: 400px; height: 225px; border-radius: 6px; overflow: hidden;
+  background: linear-gradient(135deg, rgba(8,10,9,.88), rgba(18,24,19,.82)); }
+#cam .lbl { position: absolute; inset: 0; display: grid; place-items: center; font-size: 18px; color: rgba(255,255,255,.22); letter-spacing: .5em; }
+#cam::after { content:''; position:absolute; left:0; top:0; width:26px; height:1px; background:var(--ac); }
+#tag { position: absolute; left: 24px; top: 872px; display: none; }
+#nametag { position: absolute; left: 12px; bottom: 10px; display: flex; align-items: center; gap: 8px;
+  padding: 4px 10px 4px 8px; border-radius: 12px; font-size: 16px; letter-spacing: .14em; text-transform: uppercase; }
+#nametag svg { width: 20px; height: 20px; }
+
+/* ---------- goal ---------- */
+#goal { left: 24px; top: 596px; width: 400px; height: 36px; border-radius: 18px; padding: 0 16px;
+  display: flex; align-items: center; justify-content: space-between; overflow: hidden; }
+#goal .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ac) 30%, transparent)); transition: width 1s cubic-bezier(.2,.8,.2,1); }
+#goal .edge { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--ac); transition: width 1s cubic-bezier(.2,.8,.2,1); }
+#goal .t, #goal .v { position: relative; font-size: 18px; white-space: nowrap; }
+#goal .t { font-weight: 500; letter-spacing: .04em; }
+#goal .v { font-variant-numeric: tabular-nums; color: var(--dim); }
+#goal .v b { color: var(--fg); font-weight: 500; }
+#goal.pulse { animation: gpulse 1.2s ease; }
+@keyframes gpulse { 0%,100% { border-color: var(--rim); } 30% { border-color: var(--ac); } }
+
+/* ---------- monk badge ---------- */
+#monk { left: 24px; top: 552px; height: 36px; border-radius: 18px; padding: 0 16px 0 12px; display: flex; align-items: center; gap: 10px;
+  font-size: 18px; letter-spacing: .06em; opacity: 0; transform: translateY(8px); transition: opacity .7s, transform .7s; pointer-events: none;
+  border-color: color-mix(in srgb, var(--ac) 55%, transparent); }
+#monk.on { opacity: 1; transform: none; }
+#monk i { width: 7px; height: 7px; border-radius: 50%; background: var(--ac); animation: breathe 2.6s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: .3; } }
+#monk .cd { font-variant-numeric: tabular-nums; color: var(--ac); font-weight: 500; }
+#wash { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0;
+  background: radial-gradient(ellipse at 50% 55%, color-mix(in srgb, #F0A03C 34%, transparent), color-mix(in srgb, #C0642A 14%, transparent) 55%, transparent 80%); }
+#wash.go { animation: wash 2.8s ease-in-out; }
+@keyframes wash { 0% { opacity: 0; } 35% { opacity: 1; } 100% { opacity: 0; } }
+#wololo { position: absolute; left: 50%; top: 440px; transform: translateX(-50%); z-index: 6; opacity: 0; pointer-events: none;
+  font-family: var(--disp); font-style: italic; font-size: 64px; color: #FFD9A0; letter-spacing: .08em; }
+#wololo.go { animation: wl 2.8s ease-in-out; }
+@keyframes wl { 0% { opacity: 0; letter-spacing: .02em; } 40% { opacity: .9; } 100% { opacity: 0; letter-spacing: .22em; } }
+
+/* ---------- chat ---------- */
+#chat { left: 1540px; top: 330px; width: 356px; height: 310px; border-radius: 10px; padding: 12px 16px;
+  display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 38%); mask-image: linear-gradient(to bottom, transparent 0, #000 38%); }
+.msg { font-size: 18px; line-height: 1.3; padding: 3px 0; animation: msgin .5s cubic-bezier(.2,.8,.2,1); overflow-wrap: anywhere; }
+.msg b { font-weight: 600; margin-right: 8px; }
+.msg.old1 { opacity: .85; } .msg.old2 { opacity: .6; } .msg.old3 { opacity: .4; }
+@keyframes msgin { from { opacity: 0; transform: translateY(10px); } }
+
+/* ---------- challenge ---------- */
+#chal { left: 1540px; top: 660px; width: 356px; height: 200px; border-radius: 10px; padding: 16px 20px; overflow: hidden; }
+#chal .hd { display: flex; align-items: center; justify-content: space-between; font-size: 16px; }
+#chal .stage { position: relative; margin-top: 12px; height: 128px; }
+#chal .tier { position: absolute; inset: 0; opacity: 0; transform: translateY(6px); transition: opacity .9s, transform .9s; }
+#chal .tier.on { opacity: 1; transform: none; }
+#chal .price { font-family: var(--disp); font-size: 44px; line-height: 1; color: var(--ac); }
+#chal .alt { font-size: 16px; color: var(--dim); letter-spacing: .06em; margin: 2px 0 8px; }
+#chal ul { margin: 0; padding: 0; list-style: none; font-size: 18px; line-height: 1.3; }
+#chal li::before { content: ''; display: inline-block; width: 8px; height: 1px; background: var(--ac); margin-right: 10px; vertical-align: middle; }
+#chal .dots { display: flex; gap: 6px; }
+#chal .dots i { width: 14px; height: 2px; background: rgba(255,255,255,.2); transition: background .6s; }
+#chal .dots i.on { background: var(--ac); }
+
+/* ---------- alerts ---------- */
+#alerts { position: absolute; left: 0; right: 0; top: 124px; display: flex; justify-content: center; pointer-events: none; }
+.alert { position: absolute; top: 0; min-width: 560px; max-width: 800px; border-radius: 12px; padding: 12px 24px 12px 20px; display: flex; align-items: center; gap: 18px;
+  animation: aIn .6s cubic-bezier(.2,.8,.2,1) both; }
+.alert.out { animation: aOut .5s ease-in both; }
+.alert::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 2px; background: var(--ac); border-radius: 2px; }
+.alert .ic { width: 28px; height: 28px; flex: none; }
+.alert .bd { flex: 1; min-width: 0; }
+.alert .l1 { display: flex; align-items: baseline; gap: 12px; font-size: 20px; font-weight: 500; }
+.alert .l1 .k { font-size: 16px; color: var(--ac); }
+.alert .amt { margin-left: auto; font-family: var(--disp); font-size: 34px; line-height: 1; color: var(--ac); }
+.alert .l2 { font-size: 18px; color: var(--dim); margin-top: 3px; }
+.alert .l3 { font-size: 16px; margin-top: 4px; color: var(--ac); }
+.alert .prog { position: absolute; left: 0; bottom: 0; height: 1px; background: var(--ac); width: 100%; transform-origin: left; animation: prog 4s linear forwards; }
+@keyframes aIn { from { opacity: 0; transform: translateY(-18px); filter: blur(4px); } }
+@keyframes aOut { to { opacity: 0; transform: translateY(-8px); filter: blur(3px); } }
+@keyframes prog { to { transform: scaleX(0); } }
+
+/* ---------- intro ---------- */
+#intro { position: absolute; left: 50%; top: 340px; width: 880px; transform: translateX(-50%); border-radius: 14px; padding: 26px 40px 24px;
+  opacity: 0; pointer-events: none; z-index: 8; }
+#intro.show { animation: iIn 3.5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes iIn { 0% { opacity: 0; transform: translateX(-50%) translateY(16px); filter: blur(6px); } 14%,82% { opacity: 1; transform: translateX(-50%); filter: none; } 100% { opacity: 0; transform: translateX(-50%) translateY(-10px); filter: blur(4px); } }
+#intro .row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; }
+#intro .p { display: flex; flex-direction: column; gap: 4px; }
+#intro .p.r { text-align: right; }
+#intro .pn { font-size: 28px; font-weight: 500; letter-spacing: .06em; }
+#intro .pc { font-family: var(--disp); font-style: italic; font-size: 30px; color: var(--ac); }
+#intro .pe { font-size: 18px; color: var(--dim); letter-spacing: .14em; text-transform: uppercase; }
+#intro .mid { text-align: center; }
+#intro .sc { font-size: 64px; font-weight: 500; line-height: 1; letter-spacing: .06em; }
+#intro .sc i { font-style: normal; color: var(--dim); margin: 0 10px; font-weight: 400; }
+#intro .top { display: flex; justify-content: center; align-items: center; gap: 14px; margin-bottom: 18px; font-size: 16px; }
+#intro .top svg { width: 24px; height: 24px; }
+#intro .rune { margin: 20px auto 12px; display: block; }
+#intro .foot { text-align: center; font-size: 16px; color: var(--dim); }
+</style>
+</head>
+<body>
+<script src="shared.js"></script>
+<script>
+GO.mount();
+const R = GO.root, S = GO.state;
+const $ = (h) => { const t = document.createElement('template'); t.innerHTML = h.trim(); return t.content.firstChild; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* inline marks (own drawings) */
+const EAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"><path d="M2 3 L9 8.2 Q12 7.4 15 8.2 L22 3 L20.6 12 Q20.6 19.6 12 21 Q3.4 19.6 3.4 12 Z"/><path d="M8.5 13 l2 .8 M15.5 13 l-2 .8" /><path d="M9.5 17 q2.5 1.4 5 0"/></svg>`;
+const RUNE = (w=140) => `<svg class="rune" width="${w}" height="14" viewBox="0 0 140 14" fill="none" stroke="currentColor" stroke-width="1"><path d="M0 7 H54 M86 7 H140" opacity=".5"/><path d="M62 12 V2 M62 5 L70 2 M62 9 L70 6 M76 2 L70 7 L76 12" /><path d="M66 7 L72 7" opacity="0"/></svg>`;
+
+/* ---------- build DOM ---------- */
+R.innerHTML = `
+<div id="wash"></div><div id="wololo">Wololo</div>
+
+<div id="score" class="abs glass">
+  <div class="side"><span class="nm" id="gN"></span><span class="civ" id="gC"></span></div>
+  <div class="nums"><span class="roll" id="gS"></span><span class="dash"></span><span class="roll" id="oS"></span></div>
+  <div class="side r"><span class="nm" id="oN"></span><span class="civ" id="oC"></span></div>
+  <div class="meta caps" id="meta"></div>
+</div>
+
+<div id="alerts"></div>
+
+<div id="monk" class="abs glass"><i></i><span class="caps" style="font-size:16px">Monk mode</span><span class="dim">·</span><span class="cd" id="monkCd">59:59</span></div>
+
+<div id="goal" class="abs glass"><div class="fill"></div><div class="edge"></div><span class="t" id="gT"></span><span class="v" id="gV"></span></div>
+
+<div id="cam" class="abs glass"><div class="lbl">CAM</div>
+  <div id="nametag" class="glass"><span class="ac">${EAR}</span>SwedishGoblin</div></div>
+
+<div id="chat" class="abs glass"></div>
+
+<div id="chal" class="abs glass">
+  <div class="hd"><span class="caps">Force Goblin</span><span class="dots" id="dots"></span></div>
+  <div class="stage" id="tiers"></div>
+</div>
+
+<div id="intro" class="glass">
+  <div class="top caps dim"><span class="ac">${EAR}</span>Match starting<span class="ac">${EAR}</span></div>
+  <div class="row">
+    <div class="p"><span class="pn" id="iGn"></span><span class="pc" id="iGc"></span><span class="pe" id="iGe"></span></div>
+    <div class="mid"><div class="sc" id="iSc"></div></div>
+    <div class="p r"><span class="pn" id="iOn"></span><span class="pc" id="iOc"></span><span class="pe" id="iOe"></span></div>
+  </div>
+  <div class="ac" style="text-align:center">${RUNE()}</div>
+  <div class="foot caps" id="iFoot"></div>
+</div>`;
+const q = id => R.querySelector('#' + id);
+
+/* ---------- scoreboard ---------- */
+const roll = { g: null, o: null };
+function setRoll(el, val, animate) {
+  const cur = el.querySelector('span:last-child');
+  if (cur && cur.textContent == val) return;
+  const n = document.createElement('span'); n.textContent = val;
+  if (!cur || !animate) { el.innerHTML = ''; el.appendChild(n); return; }
+  n.style.transform = 'translateY(100%)'; n.style.opacity = 0; el.appendChild(n);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    cur.style.transform = 'translateY(-100%)'; cur.style.opacity = 0;
+    n.style.transform = 'none'; n.style.opacity = 1;
+    setTimeout(() => cur.remove(), 600);
+  }));
+}
+function renderScore(animate) {
+  q('gN').textContent = S.goblin.short; q('gC').textContent = S.goblin.civ;
+  q('oN').textContent = S.opp.short; q('oC').textContent = S.opp.civ;
+  setRoll(q('gS'), S.goblin.score, animate); setRoll(q('oS'), S.opp.score, animate);
+  q('meta').innerHTML = `BO${S.bestOf} <span class="pip">·</span> ${esc(S.map)}`;
+}
+renderScore(false);
+GO.on('score', () => renderScore(true));
+
+/* ---------- goal with number roll ---------- */
+let shown = S.goal.current;
+function renderGoal() {
+  q('gT').textContent = S.goal.title;
+  q('gV').innerHTML = `<b>${GO.fmtMoney(shown)}</b> / ${GO.fmtMoney(S.goal.target)}`;
+  const p = Math.min(1, shown / S.goal.target) * 100;
+  R.querySelector('#goal .fill').style.width = p + '%';
+  R.querySelector('#goal .edge').style.width = p + '%';
+}
+renderGoal();
+function rollGoal() {
+  const from = shown, to = S.goal.current, t0 = performance.now(), d = 1100;
+  const step = t => { const k = Math.min(1, (t - t0) / d), e = 1 - Math.pow(1 - k, 3); shown = from + (to - from) * e; renderGoal(); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+  const g = q('goal'); g.classList.remove('pulse'); void g.offsetWidth; g.classList.add('pulse');
+}
+GO.on('donation', rollGoal);
+
+/* ---------- chat ---------- */
+const chat = q('chat'), MAXC = 6;
+GO.on('chat', (m) => {
+  const d = document.createElement('div'); d.className = 'msg';
+  d.innerHTML = `<b style="color:${esc(m.color)}">${esc(m.user)}</b>${esc(m.text)}`;
+  chat.appendChild(d);
+  while (chat.children.length > MAXC) chat.firstChild.remove();
+  const kids = [...chat.children], n = kids.length;
+  kids.forEach((k, i) => { const age = n - 1 - i; k.className = 'msg' + (age >= 3 ? ' old3' : age === 2 ? ' old2' : age === 1 ? ' old1' : ''); k.style.animation = i === n - 1 ? '' : 'none'; });
+});
+
+/* ---------- challenge rotator ---------- */
+const tiers = q('tiers'), dots = q('dots');
+S.challenges.forEach((c, i) => {
+  tiers.appendChild($(`<div class="tier"><div class="price">${esc(c.price)}</div><div class="alt">${esc(c.alt)}</div><ul>${c.items.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`));
+  dots.appendChild(document.createElement('i'));
+});
+let ci = 0;
+function showTier() { [...tiers.children].forEach((t, i) => t.classList.toggle('on', i === ci)); [...dots.children].forEach((t, i) => t.classList.toggle('on', i === ci)); }
+showTier(); setInterval(() => { ci = (ci + 1) % S.challenges.length; showTier(); }, 6000);
+
+/* ---------- alerts (queue) ---------- */
+const alerts = q('alerts'); const aq = []; let busy = false;
+const ICON = {
+  donation: `<svg class="ic ac" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 4 L24 14 L14 24 L4 14 Z"/><path d="M14 10 V18 M10.5 14 H17.5" opacity=".7"/></svg>`,
+  follow: `<svg class="ic ac" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="14" cy="14" r="9"/><path d="M14 9 V19 M9 14 H19"/></svg>`,
+  sub: `<span class="ic ac">${EAR}</span>`,
+  monk: `<svg class="ic ac" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M14 3 C8 3 6 9 7 12 L4 25 H24 L21 12 C22 9 20 3 14 3 Z"/><path d="M10 12 C12 15 16 15 18 12"/></svg>`,
+};
+function pushAlert(a) { aq.push(a); if (!busy) nextAlert(); }
+function nextAlert() {
+  const a = aq.shift(); if (!a) { busy = false; return; } busy = true;
+  const el = $(`<div class="alert glass">${ICON[a.type]}<div class="bd">
+      <div class="l1"><span>${esc(a.title)}</span>${a.k ? `<span class="k caps">${esc(a.k)}</span>` : ''}${a.amt ? `<span class="amt">${esc(a.amt)}</span>` : ''}</div>
+      ${a.msg ? `<div class="l2">${esc(a.msg)}</div>` : ''}${a.ch ? `<div class="l3 caps">Challenge: ${esc(a.ch)}</div>` : ''}
+    </div><div class="prog"></div></div>`);
+  alerts.appendChild(el);
+  setTimeout(() => el.classList.add('out'), 3900);
+  setTimeout(() => { el.remove(); nextAlert(); }, 4450);
+}
+GO.on('donation', p => pushAlert({ type: 'donation', title: p.name, k: 'donated', amt: GO.fmtMoney(p.amount), msg: p.msg, ch: p.challenge }));
+GO.on('follow', p => pushAlert({ type: 'follow', title: p.name, k: 'followed' }));
+GO.on('sub', p => pushAlert({ type: 'sub', title: p.name, k: 'subscribed', msg: p.months > 1 ? p.months + ' months' : 'New subscriber' }));
+
+/* ---------- intro ---------- */
+let introT;
+GO.on('intro', () => {
+  q('iGn').textContent = S.goblin.name; q('iGc').textContent = S.goblin.civ; q('iGe').textContent = 'ELO ' + S.goblin.elo;
+  q('iOn').textContent = S.opp.name; q('iOc').textContent = S.opp.civ; q('iOe').textContent = 'ELO ' + S.opp.elo;
+  q('iSc').innerHTML = `${S.goblin.score}<i>—</i>${S.opp.score}`;
+  q('iFoot').textContent = `Best of ${S.bestOf} · ${S.map}`;
+  const el = q('intro'); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+});
+
+/* ---------- monk mode ---------- */
+let monkTimer;
+function monkTick() {
+  const left = S.monk.endsAt - Date.now();
+  q('monkCd').textContent = GO.fmtClock(left);
+  if (left <= 0) { clearInterval(monkTimer); }
+}
+GO.on('monk', (p) => {
+  const on = !!p.active;
+  document.documentElement.classList.toggle('monk', on);
+  q('monk').classList.toggle('on', on);
+  clearInterval(monkTimer);
+  if (on) {
+    monkTick(); monkTimer = setInterval(monkTick, 250);
+    ['wash', 'wololo'].forEach(id => { const e = q(id); e.classList.remove('go'); void e.offsetWidth; e.classList.add('go'); });
+    pushAlert({ type: 'monk', title: p.name || 'Viewer', k: 'monk mode', msg: 'Costume on for one hour' });
+  }
+});
+</script>
+</body>
+</html>
