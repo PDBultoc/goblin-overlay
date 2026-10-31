@@ -6,14 +6,15 @@ export const DEFAULTS = {
     matchbar: { enabled: true },
     series: { enabled: true, bestOf: 3, opponentId: null, since: null, manual: { me: 0, opp: 0 } },
     intro: { enabled: true, seconds: 3.5 }, result: { enabled: true }, civdelay: { enabled: true, minutes: 3 },
-    goal: { enabled: true, title: 'Goblin goal', current: 0, target: 100, source: 'manual' },
+    // goal + alerts start off: until the Streamlabs socket (T9) is wired, Goblin's own Streamlabs widgets cover them.
+    goal: { enabled: false, title: 'Goblin goal', current: 0, target: 100, source: 'manual' },
     challenges: { enabled: true, position: 'bottom', rotateSec: 12, tiers: [
       { amount: 5, text: 'Play one game with a random civ' },
       { amount: 10, text: 'Only scouts until Castle Age' },
       { amount: 15, text: 'Monk costume for 1 hour' },
     ] },
     chat: { enabled: true, channel: 'swedishgoblin', lines: 6 },
-    alerts: { enabled: true, follow: true, sub: true, bits: true, donation: true, streamlabsToken: '' },
+    alerts: { enabled: false, follow: true, sub: true, bits: true, donation: true, streamlabsToken: '' },
     monk: { enabled: true, minutes: 60, startedAt: null },
   },
 };
