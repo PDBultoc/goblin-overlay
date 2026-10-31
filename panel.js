@@ -2,7 +2,7 @@
 import { createSettings } from './core/settings.js';
 import { createBus } from './core/bus.js';
 
-export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'chat', 'alerts', 'monk'];
+export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'messages', 'chat', 'alerts', 'monk'];
 
 export function fmtMMSS(ms) {
   const s = Math.max(0, Math.ceil(ms / 1000));
@@ -179,6 +179,16 @@ function boot() {
     ];
   }
 
+  function messagesBody() {
+    // Free announcement text, one line per row (e.g. "Total: 840$" / "5$ = 1v1 ranked or 1v1 vs you").
+    const ta = el('textarea', { rows: '5', 'aria-label': 'announcement text' });
+    ta.style.cssText = 'width:100%;resize:vertical;font:inherit;background:#0b0f0a;color:inherit;border:1px solid #2a3a22;border-radius:4px;padding:6px';
+    ta.addEventListener('change', () => write(m('messages', 'text'), ta.value));
+    const draw = () => { if (document.activeElement !== ta) ta.value = getp(m('messages', 'text')) || ''; };
+    refreshers.push(draw); draw();
+    return [field('Title (optional)', m('messages', 'title')), ta];
+  }
+
   function monkBody() {
     const clock = el('div', { class: 'mono', text: '--:--' });
     const tick = () => {
@@ -220,6 +230,7 @@ function boot() {
       field('Source', m('goal', 'source'), 'select', { options: ['manual', 'streamlabs'] }),
     ],
     challenges: tiersBody,
+    messages: messagesBody,
     chat: () => [field('Channel', m('chat', 'channel')), field('Lines', m('chat', 'lines'), 'number', { attrs: { min: '1', max: '20' } })],
     alerts: () => [
       el('div', { class: 'chk' }, ['follow', 'sub', 'bits', 'donation'].map((k) => check(k, m('alerts', k)))),

@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fmtMMSS, monkRemainingMs, currentOpponent, MODULE_ORDER } from '../panel.js';
+import { MODULES } from '../core/registry.js';
+import { cleanText } from '../modules/messages.js';
+
+test('announcement text keeps lines, trims ends, caps at 8 lines', () => {
+  assert.equal(cleanText('Total: 840$\r\n5$ = 1v1 ranked  \n\n'), 'Total: 840$\n5$ = 1v1 ranked');
+  assert.equal(cleanText(null), '');
+  assert.equal(cleanText(Array.from({ length: 12 }, (_, i) => 'l' + i).join('\n')).split('\n').length, 8);
+});
 
 test('fmtMMSS', () => {
   assert.equal(fmtMMSS(0), '00:00');
@@ -23,7 +31,7 @@ test('currentOpponent', () => {
 });
 
 test('module order', () => {
-  assert.equal(MODULE_ORDER.length, 11);
+  assert.deepEqual(MODULE_ORDER, MODULES); // panel cards == overlay modules
   assert.equal(MODULE_ORDER[0], 'cam');
-  assert.equal(MODULE_ORDER[10], 'monk');
+  assert.equal(MODULE_ORDER.at(-1), 'monk');
 });

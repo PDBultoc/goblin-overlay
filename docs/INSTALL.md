@@ -14,6 +14,7 @@
 
 ## 3. Use
 - Switch each box on/off in the panel.
+- Announcements: type them in **messages** (one line per row)
 - Showmatch: **series** → **Use current opponent**
 - **monk** → **Start** / **Stop**
 
