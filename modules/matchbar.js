@@ -26,16 +26,18 @@ const CSS = `
 .mb .s.o .elo{margin-left:0;margin-right:auto}
 .mb .s.g .elo{color:var(--acid)}
 .mb .vs{text-align:center;font:800 22px/1 Oxanium,sans-serif;letter-spacing:.12em;color:var(--mute)}
-.mb.tg{height:auto;min-height:58px;width:760px;left:580px;grid-template-columns:1fr 1fr;padding:4px 0 6px}
+.mb.tg{height:auto;min-height:58px;width:980px;left:470px;grid-template-columns:1fr 1fr;padding:5px 0 7px}
 .mb .col{padding:0 16px;min-width:0}
 .mb .col+.col{border-left:1px solid rgba(255,255,255,.08)}
 .mb .col.g{background:var(--a15)}
-.mb .ch{font:800 15px/1 Oxanium,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);height:20px;display:flex;justify-content:space-between;align-items:center}
-.mb .col.g .ch{color:var(--acid)}
-.mb .pl{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}
-.mb .p{font:600 14px/20px Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mb .p i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
-.mb .p em{font-style:normal;color:var(--mute);margin-left:5px}
+.mb .colh{font:800 14px/1 Oxanium,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);height:22px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.mb .col.g .colh{color:var(--acid)}
+.mb .pl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2px 14px}
+/* name shrinks with an ellipsis, the civ never does: no more overlap in 4v4 */
+.mb .p{display:flex;align-items:center;gap:6px;min-width:0;font:600 14px/20px Inter,sans-serif;white-space:nowrap}
+.mb .p i{flex:none;width:9px;height:9px;border-radius:50%}
+.mb .p .n{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.mb .p em{flex:none;font-style:normal;color:var(--mute)}
 @keyframes mbIn{from{transform:translateY(-70px) scaleY(1.3);opacity:0}to{transform:none;opacity:1}}
 `;
 function injectCss() {
@@ -63,8 +65,8 @@ export function renderBar(m, now, min) {
   if (m.mode === '1v1') {
     return { cls: 'pn mb slime', html: side(m, m.me, 'g', now, min) + '<div class="vs">VS</div>' + side(m, m.enemies[0][0], 'o', now, min) };
   }
-  const col = (players, cls, label) => `<div class="col ${cls}"><div class="ch"><span>${label}</span><span>avg ${avgElo(players) ?? '-'}</span></div><div class="pl">` +
-    players.map((p) => `<div class="p"><i style="background:${esc(p.colorHex || '#888')}"></i>${esc(p.name)}<em>${esc(visibleCiv(m, p, now, min))}</em></div>`).join('') + '</div></div>';
+  const col = (players, cls, label) => `<div class="col ${cls}"><div class="colh"><span>${label}</span><span>avg ${avgElo(players) ?? '-'}</span></div><div class="pl">` +
+    players.map((p) => `<div class="p"><i style="background:${esc(p.colorHex || '#888')}"></i><span class="n">${esc(p.name)}</span><em>${esc(visibleCiv(m, p, now, min))}</em></div>`).join('') + '</div></div>';
   return { cls: 'pn mb tg slime', html: col(m.myTeam, 'g', 'Goblin team') + m.enemies.map((t) => col(t, 'o', 'Enemy')).join('') };
 }
 

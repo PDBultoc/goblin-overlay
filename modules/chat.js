@@ -23,7 +23,7 @@ export function mount(root, ctx = {}) {
 
   const el = document.createElement('div');
   el.className = 'pn chat';
-  el.style.cssText = `left:1500px;top:${chatTop(2)}px;width:396px;height:${HEIGHT}px;transition:top .8s cubic-bezier(.2,.9,.2,1)`;
+  el.style.cssText = `left:1518px;top:${chatTop(2)}px;width:396px;height:${HEIGHT}px;transition:top .8s cubic-bezier(.2,.9,.2,1)`;
   // Follow the score panel: team games push the chat up, 1v1 lets it sit low.
   const place = (p) => { const n = playerCount(p && p.match); if (n) el.style.top = chatTop(n) + 'px'; };
   const offStart = bus && bus.on ? bus.on('match-start', place) : null;
