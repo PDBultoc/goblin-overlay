@@ -8,6 +8,11 @@ const CSS = `
   white-space:nowrap;transform:rotate(-4deg);animation:unlStamp .5s cubic-bezier(.3,1.6,.5,1) both}
 [data-mod=challenges] .unl small{display:block;margin-top:3px;font-size:13px;letter-spacing:.14em;opacity:.85;overflow:hidden;text-overflow:ellipsis}
 [data-mod=challenges] .unl.out{animation:unlOut .4s ease-in forwards}
+/* bottom strip: between Goblin's left HUD box and the minimap, where his own goal bar sits today (Paul, 2026-10-31) */
+[data-mod=challenges] .ch.bottom{left:560px;top:952px;width:860px;height:96px}
+[data-mod=challenges] .ch.bottom .hd,[data-mod=challenges] .ch.bottom .tabs{width:300px}
+[data-mod=challenges] .ch.bottom .ct{left:330px;right:14px;top:16px;bottom:8px}
+[data-mod=challenges] .ch.bottom .unl{top:-34px}
 @keyframes unlStamp{from{transform:rotate(-14deg) scale(2.4);opacity:0}to{transform:rotate(-4deg) scale(1);opacity:1}}
 @keyframes unlOut{to{opacity:0;transform:rotate(-4deg) scale(.9)}}
 `;
@@ -53,7 +58,7 @@ export function mount(root, ctx = {}) {
 
   const wrap = el('div', 'gx');
   wrap.style.cssText = 'position:absolute;inset:0;pointer-events:none';
-  const ch = el('div', 'pn ch');
+  const ch = el('div', cfg.position === 'left' ? 'pn ch' : 'pn ch bottom');
   const hd = el('div', 'hd');
   hd.appendChild(el('span', 't', 'Force Goblin to…'));
   const tabsEl = el('div', 'tabs');

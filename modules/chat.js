@@ -1,6 +1,20 @@
 import { connect } from '../core/twitchchat.js';
 
 const AGE = [1, 1, .92, .78, .6, .42];
+const HEIGHT = 340;
+
+// The in-game score panel (bottom right, above the minimap) grows one row per
+// player. Measured on a 1080p capture of Goblin's stream (2026-10-31): rows
+// ~24 px, panel bottom ~y 890, ~14 px padding. Chat sits just above it.
+export function chatTop(players, { rowPx = 24, scoreBottom = 890, pad = 14, gap = 12, height = HEIGHT } = {}) {
+  const n = Math.max(2, Math.min(8, players || 2));
+  return Math.max(130, Math.round(scoreBottom - pad - rowPx * n - gap - height));
+}
+
+export function playerCount(match) {
+  if (!match || !match.myTeam) return 0;
+  return match.myTeam.length + (match.enemies || []).reduce((s, t) => s + t.length, 0);
+}
 
 export function mount(root, ctx = {}) {
   const cfg = ctx.cfg || {};
@@ -9,7 +23,11 @@ export function mount(root, ctx = {}) {
 
   const el = document.createElement('div');
   el.className = 'pn chat';
-  el.style.cssText = 'left:1500px;top:300px;width:396px;height:340px';
+  el.style.cssText = `left:1500px;top:${chatTop(2)}px;width:396px;height:${HEIGHT}px;transition:top .8s cubic-bezier(.2,.9,.2,1)`;
+  // Follow the score panel: team games push the chat up, 1v1 lets it sit low.
+  const place = (p) => { const n = playerCount(p && p.match); if (n) el.style.top = chatTop(n) + 'px'; };
+  const offStart = bus && bus.on ? bus.on('match-start', place) : null;
+  const offUpd = bus && bus.on ? bus.on('match-update', place) : null;
   const hd = document.createElement('div');
   hd.className = 'hd';
   const t = document.createElement('span');
@@ -54,7 +72,7 @@ export function mount(root, ctx = {}) {
   return {
     unmount() {
       if (conn) conn.close();
-      if (typeof offBus === 'function') offBus();
+      for (const off of [offBus, offStart, offUpd]) if (typeof off === 'function') off();
       timers.forEach(clearTimeout);
       el.remove();
     },

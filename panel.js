@@ -169,6 +169,7 @@ function boot() {
     };
     refreshers.push(draw); draw();
     return [
+      field('Position', m('challenges', 'position'), 'select', { options: ['bottom', 'left'] }),
       field('Rotate (sec)', m('challenges', 'rotateSec'), 'number', { attrs: { min: '2' } }),
       list,
       el('button', { type: 'button', text: '+ Add tier', onclick: () => {

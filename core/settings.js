@@ -7,7 +7,7 @@ export const DEFAULTS = {
     series: { enabled: true, bestOf: 3, opponentId: null, since: null, manual: { me: 0, opp: 0 } },
     intro: { enabled: true, seconds: 3.5 }, result: { enabled: true }, civdelay: { enabled: true, minutes: 3 },
     goal: { enabled: true, title: 'Goblin goal', current: 0, target: 100, source: 'manual' },
-    challenges: { enabled: true, rotateSec: 12, tiers: [
+    challenges: { enabled: true, position: 'bottom', rotateSec: 12, tiers: [
       { amount: 5, text: 'Play one game with a random civ' },
       { amount: 10, text: 'Only scouts until Castle Age' },
       { amount: 15, text: 'Monk costume for 1 hour' },
