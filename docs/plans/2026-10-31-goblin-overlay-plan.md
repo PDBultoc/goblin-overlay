@@ -40,7 +40,7 @@
 ## Tasks
 
 ### T0 Scaffold — depends: none
-Files: `package.json` (`{"type":"module","scripts":{"test":"node --test tests/"}}`), `.gitignore`, `README.md` (one paragraph + local preview command). `git init`, first commit.
+Files: `package.json` (`{"type":"module","scripts":{"test":"node --test \"tests/*.test.js\""}}` — Node 24 rejects a bare directory), `.gitignore`, `README.md` (one paragraph + local preview command). `git init`, first commit.
 Done: `npm test` runs (0 tests OK).
 
 ### T1 core/settings.js — depends: T0
