@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Goblin panel</title>
+<style>
+:root{--acid:#a8ff1f;--acid2:#3fbf0a;--ink:#050705;--card:#0e130c;--line:#233019;--text:#eef5e8;--mute:#93a28c;--bad:#ff5a4a}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--text);font:14px/1.35 system-ui,Segoe UI,Arial,sans-serif}
+body{padding:8px;min-width:280px}
+h1{font-size:15px;margin:0 0 6px;color:var(--acid);letter-spacing:.06em;text-transform:uppercase}
+.top{position:sticky;top:0;z-index:2;background:var(--ink);padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.row{display:flex;align-items:center;gap:8px;margin:5px 0}
+.row>label,.lbl{flex:0 0 38%;color:var(--mute);font-size:13px}
+.row>input[type=text],.row>input[type=number],.row>input[type=password],.row>select{flex:1;min-width:0}
+input,select,button{font:inherit;color:var(--text);background:#080b07;border:1px solid var(--line);border-radius:6px;padding:5px 7px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--acid);outline-offset:1px}
+input[type=range]{flex:1;padding:0;accent-color:var(--acid)}
+button{cursor:pointer;background:#162010}
+button:hover{border-color:var(--acid)}
+button.pri{background:var(--acid);color:var(--ink);font-weight:700;border-color:var(--acid)}
+button.dng{border-color:var(--bad);color:var(--bad)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px}
+.card.off .body{opacity:.45}
+.hd{display:flex;align-items:center;justify-content:space-between}
+.hd b{font-size:14px;text-transform:uppercase;letter-spacing:.05em}
+.sw{position:relative;width:42px;height:22px;flex:none}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:1}
+.sw i{position:absolute;inset:0;background:#26301f;border-radius:11px;transition:.15s}
+.sw i::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:var(--mute);transition:.15s}
+.sw input:checked+i{background:var(--acid2)}
+.sw input:checked+i::after{left:23px;background:var(--ink)}
+.sw input:focus-visible+i{outline:2px solid var(--acid)}
+.dots{display:flex;gap:12px;margin-top:6px;font-size:13px;color:var(--mute)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#555;margin-right:4px;vertical-align:middle}
+.dot.ok{background:var(--acid)}.dot.bad{background:var(--bad)}
+.score{display:flex;align-items:center;gap:6px}.score b{min-width:22px;text-align:center;font-size:18px}
+.tier{display:flex;gap:6px;margin:5px 0}.tier input[type=number]{width:64px;flex:none}.tier input[type=text]{flex:1;min-width:0}
+.big{font-size:20px;padding:10px;flex:1}
+.mono{font-variant-numeric:tabular-nums;font-size:26px;color:var(--acid);text-align:center;margin:6px 0}
+.note{color:var(--mute);font-size:12px}
+.chk{display:flex;flex-wrap:wrap;gap:6px 14px;margin:5px 0}.chk label{display:flex;gap:5px;align-items:center}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Goblin panel</h1>
+  <div class="row"><label for="glass">Glass</label><input id="glass" type="range" min="0.2" max="0.9" step="0.05"><span id="glassv" class="note"></span></div>
+  <div class="row"><label for="profileId">Profile ID</label><input id="profileId" type="text" inputmode="numeric"></div>
+  <div class="dots" id="dots"></div>
+</div>
+<div id="cards"></div>
+<script type="module" src="panel.js"></script>
+</body>
+</html>
