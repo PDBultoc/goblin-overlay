@@ -13,6 +13,7 @@
 import { createSettings, stableJson } from './core/settings.js';
 import { createBus } from './core/bus.js';
 import { MODULES } from './core/registry.js';
+import { startAutoUpdate } from './core/autoupdate.js';
 
 const bus = createBus({ name: 'goblin' });
 const settings = createSettings();
@@ -61,6 +62,7 @@ bus.on('settings', (p) => { if (p && typeof p === 'object') settings.patch(p); e
 settings.onChange(sync);
 sync();
 bus.emit('settings-request', {});
+startAutoUpdate();
 </script>
 </body>
 </html>

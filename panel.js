@@ -1,6 +1,7 @@
 // OBS dock panel. Pure helpers are exported (node-testable); the UI boots only in a browser.
 import { createSettings } from './core/settings.js';
 import { createBus } from './core/bus.js';
+import { startAutoUpdate } from './core/autoupdate.js';
 
 export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'messages', 'chat', 'alerts', 'monk'];
 
@@ -286,4 +287,8 @@ function boot() {
   bus.on('settings-request', () => bus.emit('settings', settings.get()));
 }
 
-if (typeof document !== 'undefined') boot();
+if (typeof document !== 'undefined') {
+  boot();
+  // New version published → reload, but never while Goblin is typing in a field.
+  startAutoUpdate({ canReload: () => !document.activeElement?.matches?.('input,textarea,select') });
+}
