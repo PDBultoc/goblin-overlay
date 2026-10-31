@@ -1,6 +1,6 @@
 // result: banner on match-end, "VICTORY +17" / "DEFEAT -20".
 const CSS = `
-.rs{left:660px;top:128px;width:600px;height:96px;display:grid;place-items:center;overflow:visible;
+.rs{left:660px;top:380px;width:600px;height:96px;display:grid;place-items:center;overflow:visible;
   font:800 56px/1 Oxanium,sans-serif;letter-spacing:.14em;text-transform:uppercase;
   animation:rsIn .8s cubic-bezier(.2,1.5,.4,1) both}
 .rs.out{animation:rsOut .6s cubic-bezier(.5,0,1,.5) forwards}

@@ -13,12 +13,12 @@ export const avgElo = (players) => {
 export const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 
 const CSS = `
-.mb{left:650px;top:62px;width:620px;height:58px;display:grid;grid-template-columns:1fr 70px 1fr;align-items:center;
+.mb{left:560px;top:62px;width:800px;height:58px;display:grid;grid-template-columns:1fr 70px 1fr;align-items:center;
   overflow:visible;animation:mbIn .8s cubic-bezier(.2,1.4,.4,1) both}
 .mb .s{display:flex;align-items:center;gap:10px;padding:0 16px;min-width:0;height:56px}
 .mb .s.o{flex-direction:row-reverse;text-align:right}
 .mb .s .who{line-height:1;min-width:0}
-.mb .nm{font:800 22px/1 Oxanium,sans-serif;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.mb .nm{font:800 21px/1 Oxanium,sans-serif;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:250px}
 .mb .s.g .nm{color:var(--acid);text-shadow:0 0 12px var(--a35)}
 .mb .civ{font:500 16px/1 Inter,sans-serif;color:var(--mute);margin-top:6px}
 .mb .fl{font-size:26px;line-height:1}
@@ -52,6 +52,13 @@ function side(m, p, cls, now, min) {
     `<span class="elo">${p.rating ?? ''}</span></div>`;
 }
 
+// Goblin's in-game name ("SwedishGoblinTwitch") is long; show the brand name set in the panel.
+export function withMyName(m, name) {
+  if (!m || !name) return m;
+  const fix = (p) => (p && p.profileId === m.me.profileId ? { ...p, name } : p);
+  return { ...m, me: fix(m.me), myTeam: m.myTeam.map(fix) };
+}
+
 export function renderBar(m, now, min) {
   if (m.mode === '1v1') {
     return { cls: 'pn mb slime', html: side(m, m.me, 'g', now, min) + '<div class="vs">VS</div>' + side(m, m.enemies[0][0], 'o', now, min) };
@@ -74,7 +81,7 @@ export function mount(root, ctx) {
   const render = () => {
     if (!cur || !cur.running) { el.style.display = 'none'; shownId = null; return; }
     const min = civMinutes(settings.get());
-    const r = renderBar(cur, Date.now(), min);
+    const r = renderBar(withMyName(cur, settings.get().modules.cam?.name), Date.now(), min);
     el.className = r.cls;
     if (shownId === cur.id) el.style.animation = 'none';
     else { el.style.animation = ''; shownId = cur.id; }
