@@ -82,3 +82,75 @@ export function seriesScore(l, profileId, opponentId, sinceIso) {
   }
   return out;
 }
+
+export function createPoller({
+  profileId,
+  intervalSec = 20,
+  fetchFn = globalThis.fetch,
+  onEvents = () => {},
+  onStatus = () => {},
+  setTimer = setTimeout,
+  clearTimer = clearTimeout,
+} = {}) {
+  const url = `https://data.aoe2companion.com/api/matches?profile_ids=${profileId}&page=1`;
+  const base = intervalSec * 1000;
+  let prev = null;
+  let latest = null;
+  let timer = null;
+  let running = false;
+  let failDelay = base;
+
+  const status = (ok, reason) => {
+    try { onStatus({ source: "aoe2", ok, reason }); } catch {}
+  };
+  const schedule = (ms) => {
+    if (!running) return;
+    timer = setTimer(poll, ms);
+  };
+
+  async function poll() {
+    timer = null;
+    if (!running) return;
+    let next = base;
+    try {
+      const res = await fetchFn(url);
+      if (res.status === 429) {
+        const ra = Number(res.headers && res.headers.get("retry-after"));
+        if (Number.isFinite(ra) && ra > 0) next = ra * 1000;
+        else { failDelay = Math.min(failDelay * 2, 120000); next = failDelay; }
+        status(false, "rate-limited");
+      } else if (!res.ok) {
+        failDelay = Math.min(failDelay * 2, 120000);
+        next = failDelay;
+        status(false, `http ${res.status}`);
+      } else {
+        const data = await res.json();
+        const events = diffMatches(prev, data, profileId);
+        prev = data;
+        latest = list(data).map((r) => normalizeMatch(r, profileId)).find((m) => m && m.running) || null;
+        failDelay = base;
+        status(true);
+        if (events.length) onEvents(events);
+      }
+    } catch (e) {
+      failDelay = Math.min(failDelay * 2, 120000);
+      next = failDelay;
+      status(false, String((e && e.message) || e));
+    }
+    schedule(next);
+  }
+
+  return {
+    start() {
+      if (running) return Promise.resolve();
+      running = true;
+      return poll();
+    },
+    stop() {
+      running = false;
+      if (timer != null) clearTimer(timer);
+      timer = null;
+    },
+    latest: () => latest,
+  };
+}
