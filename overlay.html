@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Goblin overlay</title>
+<link rel="stylesheet" href="styles/toxic.css">
+<style>html,body{width:1920px;height:1080px}#stage{position:absolute;left:0;top:0;width:1920px;height:1080px}
+#stage>[data-mod]{position:absolute;inset:0;pointer-events:none}</style>
+</head>
+<body>
+<div id="stage" class="gx"></div>
+<script type="module">
+import { createSettings } from './core/settings.js';
+import { createBus } from './core/bus.js';
+import { MODULES } from './core/registry.js';
+
+const bus = createBus({ name: 'goblin' });
+const settings = createSettings();
+const stage = document.getElementById('stage');
+const live = new Map(); // name -> { layer, handle, cfgJson }
+
+function unmountMod(name) {
+  const m = live.get(name);
+  if (!m) return;
+  try { m.handle && m.handle.unmount && m.handle.unmount(); } catch (e) { console.error('unmount', name, e); }
+  m.layer.remove();
+  live.delete(name);
+}
+
+async function mountMod(name, cfg) {
+  const layer = document.createElement('div');
+  layer.dataset.mod = name;
+  stage.appendChild(layer);
+  const entry = { layer, handle: null, cfgJson: JSON.stringify(cfg) };
+  live.set(name, entry);
+  try {
+    const mod = await import('./modules/' + name + '.js');
+    if (live.get(name) !== entry) return; // unmounted while loading
+    entry.handle = mod.mount(layer, { settings, bus, cfg }) || null;
+  } catch (e) {
+    console.error('mount failed', name, e);
+  }
+}
+
+function sync() {
+  const s = createSettings().get();
+  document.documentElement.style.setProperty('--glass', String(s.glass ?? 0.55));
+  for (const name of MODULES) {
+    const cfg = (s.modules && s.modules[name]) || {};
+    const m = live.get(name);
+    if (!cfg.enabled) { unmountMod(name); continue; }
+    if (!m) { mountMod(name, cfg); continue; }
+    if (m.cfgJson !== JSON.stringify(cfg)) { unmountMod(name); mountMod(name, cfg); }
+  }
+}
+
+bus.on('settings', sync);
+settings.onChange(sync);
+sync();
+</script>
+</body>
+</html>

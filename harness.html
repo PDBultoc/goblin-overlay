@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Goblin harness</title>
+<style>
+body{margin:0;background:#111;color:#ddd;font:14px system-ui,sans-serif}
+#wrap{position:relative;width:100vw;height:calc(100vw*9/16);max-height:70vh;overflow:hidden;background:#000}
+#scaler{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+#scaler img,#scaler iframe{position:absolute;left:0;top:0;width:1920px;height:1080px;border:0}
+iframe{background:transparent}
+#ctl{padding:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#ctl button{padding:5px 9px;cursor:pointer}
+#mods label{margin-right:10px}
+#log{padding:0 10px;color:#8c8}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="scaler"><img src="prototypes/game.webp" alt=""><iframe src="overlay.html" title="overlay"></iframe></div></div>
+<div id="ctl"></div>
+<div style="padding:0 10px"><span id="mods"></span></div>
+<div id="log"></div>
+<script type="module">
+import { createSettings } from './core/settings.js';
+import { createBus } from './core/bus.js';
+import { MODULES } from './core/registry.js';
+import { normalizeMatch } from './core/aoe2.js';
+
+const settings = createSettings();
+const bus = createBus({ name: 'goblin' });
+const wrap = document.getElementById('wrap'), scaler = document.getElementById('scaler');
+function fit() { scaler.style.transform = 'scale(' + (wrap.clientWidth / 1920) + ')'; }
+addEventListener('resize', fit); fit();
+
+const logEl = document.getElementById('log');
+function emit(type, payload) { bus.emit(type, payload); logEl.textContent = 'emitted ' + type + ' ' + JSON.stringify(payload).slice(0, 160); }
+
+let matches = [];
+try {
+  const j = await (await fetch('tests/fixtures/matches-page1.json')).json();
+  matches = j.matches;
+} catch (e) { console.error('fixture load failed', e); }
+const pid = settings.get().profileId;
+const byId = (id) => normalizeMatch(matches.find((m) => m.matchId === id), pid);
+
+const btns = [
+  ['match-start (517739982)', () => emit('match-start', byId(517739982))],
+  ['match-end (517719659)', () => emit('match-end', byId(517719659))],
+  ['donation', () => emit('donation', { name: 'TestViking', amount: 10, currency: 'USD', message: 'Go goblin go!' })],
+  ['follow', () => emit('follow', { name: 'NewFollower' })],
+  ['sub', () => emit('sub', { name: 'SubHero', months: 3 })],
+  ['bits', () => emit('bits', { name: 'BitLord', amount: 500 })],
+  ['chat', () => emit('chat', { user: 'viewer' + Math.floor(Math.random() * 99), color: '#a8ff1f', text: 'Hello from the harness' })],
+  ['monk-start', () => emit('monk-start', {})],
+  ['monk-stop', () => emit('monk-stop', {})],
+];
+const ctl = document.getElementById('ctl');
+for (const [label, fn] of btns) {
+  const b = document.createElement('button'); b.textContent = label; b.onclick = fn; ctl.appendChild(b);
+}
+
+const mods = document.getElementById('mods');
+function renderBoxes() {
+  mods.textContent = '';
+  const s = settings.get();
+  for (const n of MODULES) {
+    const l = document.createElement('label');
+    const c = document.createElement('input'); c.type = 'checkbox'; c.checked = !!s.modules[n].enabled;
+    c.onchange = () => createSettings().set('modules.' + n + '.enabled', c.checked);
+    l.append(c, ' ' + n); mods.appendChild(l);
+  }
+}
+renderBoxes();
+settings.onChange(renderBoxes);
+</script>
+</body>
+</html>
