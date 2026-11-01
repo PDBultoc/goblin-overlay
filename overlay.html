@@ -14,6 +14,7 @@ import { createSettings, stableJson } from './core/settings.js';
 import { createBus } from './core/bus.js';
 import { MODULES } from './core/registry.js';
 import { startAutoUpdate } from './core/autoupdate.js';
+import { createRemote } from './core/remote.js';
 
 const bus = createBus({ name: 'goblin' });
 const settings = createSettings();
@@ -59,9 +60,20 @@ function sync() {
 // full settings arrive over the bus and are cached in this page's own storage,
 // so the overlay keeps working with the dock closed.
 bus.on('settings', (p) => { if (p && typeof p === 'object') settings.patch(p); else sync(); });
-settings.onChange(sync);
+// Remote sync (?room=CODE in the source URL): the panel's settings arrive through
+// ntfy.sh, because Streamlabs Desktop's panel and browser source cannot talk locally.
+// Changes made here (series count, goal) go back the same way.
+const room = new URLSearchParams(location.search).get('room') || '';
+let fromRemote = false;
+const remote = createRemote({
+  room,
+  onSettings: (s) => { fromRemote = true; try { settings.patch(s); } finally { fromRemote = false; } },
+  onStatus: (st) => bus.emit('status', st),
+});
+settings.onChange(() => { sync(); if (!fromRemote) remote.publish(settings.get()); });
 sync();
 bus.emit('settings-request', {});
+remote.start();
 startAutoUpdate();
 </script>
 </body>

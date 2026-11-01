@@ -22,18 +22,19 @@ code{font:600 13px/1.4 Consolas,monospace;background:#0b0f0a;color:#a8ff1f;borde
 <h1>Goblin Overlay</h1>
 <p class="sub">Setup in Streamlabs Desktop · about 3 minutes</p>
 
-<section><h2><span>1</span>Overlay</h2><ol>
-<li><b>Sources</b> → <b>+</b> → <b>Browser Source</b></li>
-<li>URL: <code>https://pdbultoc.github.io/goblin-overlay/overlay.html</code></li>
-<li>Width <b>1920</b>, Height <b>1080</b></li>
-<li>Untick <b>Shutdown source when not visible</b></li>
-<li>Drag it above your game capture</li>
-</ol></section>
-
-<section><h2><span>2</span>Panel</h2><ol>
+<section><h2><span>1</span>Panel</h2><ol>
 <li><b>Layout Editor</b> → drag <b>Website</b> into a slot</li>
 <li>URL: <code>https://pdbultoc.github.io/goblin-overlay/panel.html</code></li>
 <li><b>Save</b></li>
+<li>In the panel, click <b>Copy overlay link</b></li>
+</ol></section>
+
+<section><h2><span>2</span>Overlay</h2><ol>
+<li><b>Sources</b> → <b>+</b> → <b>Browser Source</b></li>
+<li>URL: <b>paste</b> the overlay link</li>
+<li>Width <b>1920</b>, Height <b>1080</b></li>
+<li>Untick <b>Shutdown source when not visible</b></li>
+<li>Drag it above your game capture</li>
 </ol></section>
 
 <section><h2><span>3</span>Use</h2><ul>
@@ -45,6 +46,7 @@ code{font:600 13px/1.4 Consolas,monospace;background:#0b0f0a;color:#a8ff1f;borde
 
 <section><h2><span>!</span>Fix</h2><ul>
 <li>Nothing shows: source <b>Properties</b> → <b>Refresh cache of current page</b></li>
+<li>Panel changes don't arrive: the <b>sync</b> dot must be green</li>
 </ul></section>
 
 <div class="end">Enjoy, Goblin!</div>

@@ -2,6 +2,7 @@
 import { createSettings } from './core/settings.js';
 import { createBus } from './core/bus.js';
 import { startAutoUpdate } from './core/autoupdate.js';
+import { createRemote, newRoom } from './core/remote.js';
 
 export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'messages', 'chat', 'alerts', 'monk'];
 
@@ -32,9 +33,24 @@ function boot() {
   let lastMatch = null;
   let opponentName = null;
 
+  // Sync room: ?room= in the panel URL wins (lets Paul or a mod open the same room),
+  // else the one this panel made before, else a new one.
+  const room = new URLSearchParams(location.search).get('room')
+    || (() => { try { return localStorage.getItem('goblin.room'); } catch { return null; } })()
+    || newRoom();
+  try { localStorage.setItem('goblin.room', room); } catch { /* ignore */ }
+  const overlayLink = new URL('overlay.html?room=' + room, location.href).href;
+
+  const remote = createRemote({
+    room,
+    onSettings: (s) => { settings.patch(s); refreshers.forEach((f) => f()); },
+    onStatus: (st) => bus.emit('status', st),
+  });
+
   const write = (path, value) => {
     settings.set(path, value);
     bus.emit('settings', settings.get());
+    remote.publish(settings.get());
   };
   const getp = (path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), settings.get());
 
@@ -259,7 +275,16 @@ function boot() {
   refreshers.push(showPid); showPid();
 
   const dots = {};
-  for (const s of ['aoe2', 'chat', 'streamlabs']) {
+  $('room').textContent = room;
+  $('copyLink').addEventListener('click', async () => {
+    let ok = false;
+    try { await navigator.clipboard.writeText(overlayLink); ok = true; } catch { /* clipboard blocked */ }
+    $('copied').textContent = ok ? 'Copied! Paste it as the Browser Source URL.' : overlayLink;
+  });
+  // Load the newest settings in the room, then send ours (the rev rule keeps whichever is newer).
+  remote.start().then(() => remote.publish(settings.get()));
+
+  for (const s of ['aoe2', 'chat', 'streamlabs', 'sync']) {
     const d = el('span', { class: 'dot' });
     dots[s] = d;
     $('dots').append(el('span', { title: 'no status yet' }, [d, s]));
