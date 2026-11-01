@@ -1,6 +1,11 @@
 // Alerts: follow / sub / bits / donation. Queued, one at a time (~5 s), never overlapping.
 // Position: .al = left 460, top 180, 1000x150 (y 180..330; clear of y>=868).
-export const SHOW_MS = 5000;
+export const SHOW_MS = 8000;
+// How long one alert stays: the panel's "Seconds" (2–30), else 8 s (Paul: 5 s was too short).
+export const showMs = (cfg) => {
+  const s = Number(cfg && cfg.seconds);
+  return Number.isFinite(s) && s > 0 ? Math.min(30, Math.max(2, s)) * 1000 : SHOW_MS;
+};
 export const OUT_MS = 450;
 
 const ENT = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -64,8 +69,9 @@ export function mount(root, ctx = {}) {
       + (a.msg ? '<div class="msg2">' + a.msg + '</div>' : '') + '</div><div class="sl"></div></div></div>';
     root.appendChild(el);
     live = el;
-    later(() => el.classList.add('out'), SHOW_MS - OUT_MS);
-    later(() => { el.remove(); if (live === el) live = null; done(); }, SHOW_MS);
+    const show = showMs(cfg);
+    later(() => el.classList.add('out'), show - OUT_MS);
+    later(() => { el.remove(); if (live === el) live = null; done(); }, show);
   });
 
   const offs = [];

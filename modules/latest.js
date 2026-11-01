@@ -61,6 +61,29 @@ export function mount(root, ctx = {}) {
   root.appendChild(box);
   // Follow the chat: team games push both up.
   const place = (p) => { const n = playerCount(p && p.match); if (n) { layout.players = n; box.style.top = latestTop(n) + 'px'; } };
-  const offs = ctx.bus && ctx.bus.on ? [ctx.bus.on('match-start', place), ctx.bus.on('match-update', place)] : [];
+  // The overlay is the one that receives every relayed Streamlabs event, so it
+  // records them; the saved value survives restarts and syncs back to the panel.
+  const record = (e) => {
+    if (!e || !ctx.settings) return;
+    const cur = ctx.settings.get().modules.latest || {};
+    ctx.settings.set('modules.latest', recordLatest(cur, e));
+    ctx.bus.emit('settings', ctx.settings.get());
+  };
+  const offs = ctx.bus && ctx.bus.on ? [
+    ctx.bus.on('match-start', place), ctx.bus.on('match-update', place),
+    ctx.bus.on('follow', (p) => record({ ...p, type: 'follow' })),
+    ctx.bus.on('donation', (p) => record({ ...p, type: 'donation' })),
+    ctx.bus.on('sub', (p) => record({ ...p, type: 'sub' })),
+    // Stream Labels snapshot from Streamlabs (if its socket sends one): fills in
+    // values from before the overlay existed. Only writes when something differs.
+    ctx.bus.on('latest-snapshot', (p) => {
+      if (!p || !p.latest || !ctx.settings) return;
+      const cur = ctx.settings.get().modules.latest || {};
+      const next = { ...cur, ...p.latest };
+      if (JSON.stringify(next) === JSON.stringify(cur)) return;
+      ctx.settings.set('modules.latest', next);
+      ctx.bus.emit('settings', ctx.settings.get());
+    }),
+  ] : [];
   return { unmount() { offs.forEach((o) => typeof o === 'function' && o()); box.remove(); } };
 }

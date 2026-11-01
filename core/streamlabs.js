@@ -21,6 +21,32 @@ export function mapEvent(raw) {
   }).filter(Boolean);
 }
 
+// Stream Labels (most recent follower / donator / subscriber) may arrive on the same
+// socket as type "streamlabels" / "streamlabels.underlying". The shape is NOT documented
+// (checked 2026-11-01), so read it defensively: a value can be a string or {name, amount}.
+const pick = (data, keys) => { for (const k of keys) if (data && data[k] != null && data[k] !== '') return data[k]; return null; };
+const asPerson = (v) => {
+  if (v == null) return null;
+  if (typeof v === 'object') return v.name ? { name: str(v.name), amount: v.amount != null ? num(v.amount) : undefined, months: v.months != null ? num(v.months) : undefined } : null;
+  const s = str(v).trim();
+  if (!s) return null;
+  const m = s.match(/^(.*?)\s*\(?\s*[$€£]?\s*([\d.,]+)\s*\)?$/); // "Name ($10.00)" or "Name 10"
+  return m && m[1] ? { name: m[1].trim(), amount: num(m[2].replace(',', '.')) } : { name: s };
+};
+
+export function mapLabels(raw) {
+  if (!raw || typeof raw !== 'object' || !String(raw.type || '').startsWith('streamlabels')) return null;
+  const d = (raw.message && (raw.message.data || raw.message)) || {};
+  const f = asPerson(pick(d, ['most_recent_follower', 'twitch_most_recent_follower']));
+  const dn = asPerson(pick(d, ['most_recent_donator', 'most_recent_donation']));
+  const sb = asPerson(pick(d, ['most_recent_subscriber', 'twitch_most_recent_subscriber']));
+  const out = {};
+  if (f) out.follow = { name: f.name };
+  if (dn) out.donation = { name: dn.name, amount: dn.amount ?? 0, currency: 'USD' };
+  if (sb) out.sub = { name: sb.name, months: sb.months || 1 };
+  return Object.keys(out).length ? out : null;
+}
+
 // socket.io v2 client (window.io) is loaded by the panel from cdnjs only when a token is set.
 export function connectStreamlabs({ token, onEvent, onStatus = () => {}, io = globalThis.io }) {
   if (!token || typeof io !== 'function') { onStatus({ source: 'streamlabs', ok: false, reason: token ? 'client not loaded' : 'no token' }); return { close() {} }; }
@@ -28,6 +54,10 @@ export function connectStreamlabs({ token, onEvent, onStatus = () => {}, io = gl
   s.on('connect', () => onStatus({ source: 'streamlabs', ok: true }));
   s.on('connect_error', () => onStatus({ source: 'streamlabs', ok: false, reason: 'cannot connect (token?)' }));
   s.on('disconnect', () => onStatus({ source: 'streamlabs', ok: false, reason: 'disconnected' }));
-  s.on('event', (raw) => { for (const e of mapEvent(raw)) { try { onEvent(e); } catch { /* keep going */ } } });
+  s.on('event', (raw) => {
+    const labels = mapLabels(raw);
+    if (labels) { try { onEvent({ type: 'latest-snapshot', latest: labels }); } catch { /* keep going */ } return; }
+    for (const e of mapEvent(raw)) { try { onEvent(e); } catch { /* keep going */ } }
+  });
   return { close: () => s.close() };
 }

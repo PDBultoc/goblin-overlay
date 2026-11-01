@@ -1,3 +1,4 @@
+import { showMs } from '../modules/alerts.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { monkRemaining, fmtClock } from '../modules/monk.js';
@@ -42,4 +43,12 @@ test('describeAlert: per-type toggles and escaping', () => {
   assert.ok(!d.msg.includes('<img'));
   const s = describeAlert('sub', { name: 'n', months: 3 }, { sub: true });
   assert.ok(s.kick && s.badge);
+});
+
+test('alert display time: panel seconds clamped 2-30, default 8 s', () => {
+  assert.equal(showMs({}), 8000);
+  assert.equal(showMs({ seconds: 12 }), 12000);
+  assert.equal(showMs({ seconds: 1 }), 2000);
+  assert.equal(showMs({ seconds: 99 }), 30000);
+  assert.equal(showMs({ seconds: 'x' }), 8000);
 });

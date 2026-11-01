@@ -16,7 +16,7 @@ export const DEFAULTS = {
     messages: { enabled: true, title: '', text: '5$ = 1v1 ranked or 1v1 vs you' },
     latest: { enabled: true },
     chat: { enabled: true, channel: 'swedishgoblin', lines: 6 },
-    alerts: { enabled: false, follow: true, sub: true, bits: true, donation: true, streamlabsToken: '' },
+    alerts: { enabled: false, seconds: 8, follow: true, sub: true, bits: true, donation: true, streamlabsToken: '' },
     monk: { enabled: true, minutes: 60, startedAt: null },
   },
 };

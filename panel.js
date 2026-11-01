@@ -4,7 +4,7 @@ import { createBus } from './core/bus.js';
 import { startAutoUpdate } from './core/autoupdate.js';
 import { createRemote, newRoom } from './core/remote.js';
 import { connectStreamlabs } from './core/streamlabs.js';
-import { recordLatest, latestRows } from './modules/latest.js';
+import { latestRows } from './modules/latest.js';
 
 export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'messages', 'latest', 'chat', 'alerts', 'monk'];
 
@@ -258,10 +258,18 @@ function boot() {
         info.textContent = latestRows(getp('modules.latest') || {}).map((r) => `${r.label}: ${r.value}${r.extra ? ' (' + r.extra + ')' : ''}`).join(' · ');
       };
       refreshers.push(show); show();
-      return [info, el('div', { class: 'note', text: 'Filled by Streamlabs events (needs the token in alerts).' })];
+      return [
+        info,
+        el('div', { class: 'note', text: 'Filled by Streamlabs events (needs the token in alerts). Or set them by hand:' }),
+        field('Follower', 'modules.latest.follow.name'),
+        field('Donator', 'modules.latest.donation.name'),
+        field('Amount', 'modules.latest.donation.amount', 'number', { attrs: { min: '0', step: '0.01' } }),
+        field('Subscriber', 'modules.latest.sub.name'),
+      ];
     },
     chat: () => [field('Channel', m('chat', 'channel')), field('Lines', m('chat', 'lines'), 'number', { attrs: { min: '1', max: '20' } })],
     alerts: () => [
+      field('Seconds', m('alerts', 'seconds'), 'number', { attrs: { min: '2', max: '30' } }),
       el('div', { class: 'chk' }, ['follow', 'sub', 'bits', 'donation'].map((k) => check(k, m('alerts', k)))),
       field('Streamlabs token', m('alerts', 'streamlabsToken'), 'password', { attrs: { autocomplete: 'off' } }),
     ],
@@ -314,14 +322,8 @@ function boot() {
     sl = connectStreamlabs({
       token: tok,
       // Only through the room: a local emit too would reach an OBS overlay twice.
-      onEvent: (e) => {
-        remote.publishEvent(e.type, e);
-        // Remember the newest follower / donation / sub for the "latest" strip.
-        if (e.type === 'follow' || e.type === 'donation' || e.type === 'sub') {
-          write('modules.latest', recordLatest(getp('modules.latest'), e));
-          refreshers.forEach((f) => f());
-        }
-      },
+      // The overlay records "latest" itself (one owner); the panel only shows it.
+      onEvent: (e) => remote.publishEvent(e.type, e),
       onStatus: (st) => bus.emit('status', st),
     });
   };

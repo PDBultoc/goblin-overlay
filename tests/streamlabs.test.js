@@ -33,3 +33,13 @@ test('missing id gets a stable fallback so the goal can dedupe', () => {
   assert.ok(a.id);
   assert.equal(a.id, b.id);
 });
+
+test('stream labels (undocumented shape) fill the latest strip when they arrive', async () => {
+  const { mapLabels } = await import('../core/streamlabs.js');
+  assert.deepEqual(mapLabels({ type: 'streamlabels', message: { data: { most_recent_follower: 'Bob', most_recent_donator: 'Viking ($10.00)', most_recent_subscriber: 'Ann' } } }),
+    { follow: { name: 'Bob' }, donation: { name: 'Viking', amount: 10, currency: 'USD' }, sub: { name: 'Ann', months: 1 } });
+  assert.deepEqual(mapLabels({ type: 'streamlabels.underlying', message: { data: { most_recent_donator: { name: 'V', amount: 5 } } } }),
+    { donation: { name: 'V', amount: 5, currency: 'USD' } });
+  assert.equal(mapLabels({ type: 'donation', message: [] }), null);
+  assert.equal(mapLabels({ type: 'streamlabels', message: { data: {} } }), null);
+});
