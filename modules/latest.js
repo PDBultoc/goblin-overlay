@@ -2,6 +2,7 @@
 // The panel records Streamlabs events into modules.latest (so the values survive
 // restarts and reach the overlay through the sync room); this module only shows them.
 import { chatTop, playerCount, layout } from './chat.js';
+import { cleanLabelName } from '../core/streamlabs.js';
 
 export const LATEST_H = 104;
 
@@ -30,10 +31,12 @@ const SYM = { USD: '$', EUR: '€', GBP: '£', SEK: 'kr ' };
 const money = (amount, cur) => (SYM[cur] ?? (cur ? cur + ' ' : '$')) + (Math.round(Number(amount) * 100) / 100);
 
 export function latestRows(l = {}) {
+  // Clean at display too: values stored before the fix still carry the template prefix.
+  const n = (p) => cleanLabelName(p?.name) || '—';
   return [
-    { key: 'follow', label: 'Follower', value: l.follow?.name || '—', extra: '' },
-    { key: 'donation', label: 'Donation', value: l.donation?.name || '—', extra: l.donation ? money(l.donation.amount, l.donation.currency) : '' },
-    { key: 'sub', label: 'Sub', value: l.sub?.name || '—', extra: l.sub ? (Number(l.sub.months) > 1 ? `${l.sub.months} months` : 'new') : '' },
+    { key: 'follow', label: 'Follower', value: n(l.follow), extra: '' },
+    { key: 'donation', label: 'Donation', value: n(l.donation), extra: l.donation ? money(l.donation.amount, l.donation.currency) : '' },
+    { key: 'sub', label: 'Sub', value: n(l.sub), extra: l.sub ? (Number(l.sub.months) > 1 ? `${l.sub.months} months` : 'new') : '' },
   ];
 }
 

@@ -25,13 +25,24 @@ export function mapEvent(raw) {
 // socket as type "streamlabels" / "streamlabels.underlying". The shape is NOT documented
 // (checked 2026-11-01), so read it defensively: a value can be a string or {name, amount}.
 const pick = (data, keys) => { for (const k of keys) if (data && data[k] != null && data[k] !== '') return data[k]; return null; };
+// Stream Labels come formatted with the streamer's own template, e.g.
+// "New Follower: drowsyduck", "Donation Nub: $10.00", "New Subscriber: kapten"
+// (seen on Goblin's stream 2026-11-01). Keep only the name.
+export function cleanLabelName(s) {
+  return String(s ?? '')
+    .replace(/^\s*(new\s+|latest\s+|recent\s+|most\s+recent\s+)?(follower|follow|subscriber|sub|donation|donator|donor|tip|tipper|cheer|bits)s?\b\s*:?\s*/i, '')
+    .replace(/\s*:\s*$/, '')
+    .trim();
+}
+
 const asPerson = (v) => {
   if (v == null) return null;
-  if (typeof v === 'object') return v.name ? { name: str(v.name), amount: v.amount != null ? num(v.amount) : undefined, months: v.months != null ? num(v.months) : undefined } : null;
+  if (typeof v === 'object') return v.name ? { name: cleanLabelName(v.name), amount: v.amount != null ? num(v.amount) : undefined, months: v.months != null ? num(v.months) : undefined } : null;
   const s = str(v).trim();
   if (!s) return null;
   const m = s.match(/^(.*?)\s*\(?\s*[$€£]?\s*([\d.,]+)\s*\)?$/); // "Name ($10.00)" or "Name 10"
-  return m && m[1] ? { name: m[1].trim(), amount: num(m[2].replace(',', '.')) } : { name: s };
+  const out = m && m[1] ? { name: cleanLabelName(m[1]), amount: num(m[2].replace(',', '.')) } : { name: cleanLabelName(s) };
+  return out.name ? out : null;
 };
 
 export function mapLabels(raw) {

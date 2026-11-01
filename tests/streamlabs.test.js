@@ -43,3 +43,15 @@ test('stream labels (undocumented shape) fill the latest strip when they arrive'
   assert.equal(mapLabels({ type: 'donation', message: [] }), null);
   assert.equal(mapLabels({ type: 'streamlabels', message: { data: {} } }), null);
 });
+
+test('stream label template prefixes are stripped (seen on Goblin stream 2026-11-01)', async () => {
+  const { cleanLabelName, mapLabels } = await import('../core/streamlabs.js');
+  assert.equal(cleanLabelName('New Follower: drowsyduck'), 'drowsyduck');
+  assert.equal(cleanLabelName('New Subscriber: kapten'), 'kapten');
+  assert.equal(cleanLabelName('Donation Nub:'), 'Nub');
+  assert.equal(cleanLabelName('Subzero'), 'Subzero');       // real names that start like a prefix stay
+  assert.equal(cleanLabelName('Follower123'), 'Follower123');
+  assert.deepEqual(mapLabels({ type: 'streamlabels', message: { data: {
+    most_recent_follower: 'New Follower: drowsyduck', most_recent_donator: 'Donation Nub: $10.00', most_recent_subscriber: 'New Subscriber: kapten' } } }),
+  { follow: { name: 'drowsyduck' }, donation: { name: 'Nub', amount: 10, currency: 'USD' }, sub: { name: 'kapten', months: 1 } });
+});
