@@ -11,6 +11,10 @@ export function chatTop(players, { rowPx = 24, scoreBottom = 890, pad = 14, gap 
   return Math.max(130, Math.round(scoreBottom - pad - rowPx * n - gap - height));
 }
 
+// Last known player count, shared by the chat and the "latest" strip so a module
+// that is re-mounted (its settings changed) lands where the current game put it.
+export const layout = { players: 2 };
+
 export function playerCount(match) {
   if (!match || !match.myTeam) return 0;
   return match.myTeam.length + (match.enemies || []).reduce((s, t) => s + t.length, 0);
@@ -23,9 +27,9 @@ export function mount(root, ctx = {}) {
 
   const el = document.createElement('div');
   el.className = 'pn chat';
-  el.style.cssText = `left:1518px;top:${chatTop(2)}px;width:396px;height:${HEIGHT}px;transition:top .8s cubic-bezier(.2,.9,.2,1)`;
+  el.style.cssText = `left:1518px;top:${chatTop(layout.players)}px;width:396px;height:${HEIGHT}px;transition:top .8s cubic-bezier(.2,.9,.2,1)`;
   // Follow the score panel: team games push the chat up, 1v1 lets it sit low.
-  const place = (p) => { const n = playerCount(p && p.match); if (n) el.style.top = chatTop(n) + 'px'; };
+  const place = (p) => { const n = playerCount(p && p.match); if (n) { layout.players = n; el.style.top = chatTop(n) + 'px'; } };
   const offStart = bus && bus.on ? bus.on('match-start', place) : null;
   const offUpd = bus && bus.on ? bus.on('match-update', place) : null;
   const hd = document.createElement('div');

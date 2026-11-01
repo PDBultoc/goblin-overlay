@@ -14,6 +14,7 @@ export const DEFAULTS = {
       { amount: 15, text: 'Monk costume for 1 hour' },
     ] },
     messages: { enabled: true, title: '', text: '5$ = 1v1 ranked or 1v1 vs you' },
+    latest: { enabled: true },
     chat: { enabled: true, channel: 'swedishgoblin', lines: 6 },
     alerts: { enabled: false, follow: true, sub: true, bits: true, donation: true, streamlabsToken: '' },
     monk: { enabled: true, minutes: 60, startedAt: null },

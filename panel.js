@@ -4,8 +4,9 @@ import { createBus } from './core/bus.js';
 import { startAutoUpdate } from './core/autoupdate.js';
 import { createRemote, newRoom } from './core/remote.js';
 import { connectStreamlabs } from './core/streamlabs.js';
+import { recordLatest, latestRows } from './modules/latest.js';
 
-export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'messages', 'chat', 'alerts', 'monk'];
+export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'messages', 'latest', 'chat', 'alerts', 'monk'];
 
 export function fmtMMSS(ms) {
   const s = Math.max(0, Math.ceil(ms / 1000));
@@ -251,6 +252,14 @@ function boot() {
     ],
     challenges: tiersBody,
     messages: messagesBody,
+    latest: () => {
+      const info = el('div', { class: 'note' });
+      const show = () => {
+        info.textContent = latestRows(getp('modules.latest') || {}).map((r) => `${r.label}: ${r.value}${r.extra ? ' (' + r.extra + ')' : ''}`).join(' · ');
+      };
+      refreshers.push(show); show();
+      return [info, el('div', { class: 'note', text: 'Filled by Streamlabs events (needs the token in alerts).' })];
+    },
     chat: () => [field('Channel', m('chat', 'channel')), field('Lines', m('chat', 'lines'), 'number', { attrs: { min: '1', max: '20' } })],
     alerts: () => [
       el('div', { class: 'chk' }, ['follow', 'sub', 'bits', 'donation'].map((k) => check(k, m('alerts', k)))),
@@ -305,7 +314,14 @@ function boot() {
     sl = connectStreamlabs({
       token: tok,
       // Only through the room: a local emit too would reach an OBS overlay twice.
-      onEvent: (e) => remote.publishEvent(e.type, e),
+      onEvent: (e) => {
+        remote.publishEvent(e.type, e);
+        // Remember the newest follower / donation / sub for the "latest" strip.
+        if (e.type === 'follow' || e.type === 'donation' || e.type === 'sub') {
+          write('modules.latest', recordLatest(getp('modules.latest'), e));
+          refreshers.forEach((f) => f());
+        }
+      },
       onStatus: (st) => bus.emit('status', st),
     });
   };
