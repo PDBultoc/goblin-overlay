@@ -3,6 +3,7 @@ import { createSettings } from './core/settings.js';
 import { createBus } from './core/bus.js';
 import { startAutoUpdate } from './core/autoupdate.js';
 import { createRemote, newRoom } from './core/remote.js';
+import { connectStreamlabs } from './core/streamlabs.js';
 
 export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'messages', 'chat', 'alerts', 'monk'];
 
@@ -51,7 +52,9 @@ function boot() {
     settings.set(path, value);
     bus.emit('settings', settings.get());
     remote.publish(settings.get());
+    if (path.startsWith('modules.alerts')) onAlertsWrite();
   };
+  let onAlertsWrite = () => {};
   const getp = (path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), settings.get());
 
   function el(tag, props = {}, kids = []) {
@@ -283,6 +286,32 @@ function boot() {
   });
   // Load the newest settings in the room, then send ours (the rev rule keeps whichever is newer).
   remote.start().then(() => remote.publish(settings.get()));
+
+  // Streamlabs: the panel holds the token, connects, and forwards only the events.
+  let sl = null, slToken = null;
+  const loadIo = () => (typeof window.io === 'function' ? Promise.resolve() : new Promise((ok, bad) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js';
+    s.onload = ok; s.onerror = bad;
+    document.head.appendChild(s);
+  }));
+  const syncStreamlabs = async () => {
+    const tok = getp(m('alerts', 'streamlabsToken')) || '';
+    if (tok === slToken) return;
+    slToken = tok;
+    if (sl) { sl.close(); sl = null; }
+    if (!tok) { bus.emit('status', { source: 'streamlabs', ok: false, reason: 'no token' }); return; }
+    try { await loadIo(); } catch { bus.emit('status', { source: 'streamlabs', ok: false, reason: 'client not loaded' }); return; }
+    sl = connectStreamlabs({
+      token: tok,
+      // Only through the room: a local emit too would reach an OBS overlay twice.
+      onEvent: (e) => remote.publishEvent(e.type, e),
+      onStatus: (st) => bus.emit('status', st),
+    });
+  };
+  onAlertsWrite = syncStreamlabs;
+  refreshers.push(() => { syncStreamlabs(); });
+  syncStreamlabs();
 
   for (const s of ['aoe2', 'chat', 'streamlabs', 'sync']) {
     const d = el('span', { class: 'dot' });

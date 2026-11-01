@@ -68,6 +68,7 @@ let fromRemote = false;
 const remote = createRemote({
   room,
   onSettings: (s) => { fromRemote = true; try { settings.patch(s); } finally { fromRemote = false; } },
+  onEvent: (type, payload) => bus.emit(type, payload), // Streamlabs events relayed by the panel
   onStatus: (st) => bus.emit('status', st),
 });
 settings.onChange(() => { sync(); if (!fromRemote) remote.publish(settings.get()); });

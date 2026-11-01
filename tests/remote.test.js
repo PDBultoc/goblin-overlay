@@ -62,6 +62,27 @@ test('publish() posts stripped settings to the room topic, debounced', async () 
   assert.ok(!posts[0].body.includes('SECRET'));
 });
 
+test('events: sent at once, delivered live, never replayed from the cache', async () => {
+  const posts = [];
+  const settings = [], events = [];
+  const fetchFn = async (url, opt) => {
+    if (opt && opt.method === 'POST') { posts.push(JSON.parse(opt.body)); return { ok: true, text: async () => '' }; }
+    return { ok: true, text: async () => [
+      JSON.stringify({ event: 'message', message: JSON.stringify({ _rev: 1, glass: 0.3 }) }),
+      JSON.stringify({ event: 'message', message: JSON.stringify({ kind: 'event', type: 'donation', payload: { amount: 5 } }) }),
+    ].join('\n') };
+  };
+  const r = createRemote({ room: 'r3', fetchFn, ES: FakeES, onSettings: (s) => settings.push(s.glass), onEvent: (t, p) => events.push([t, p.amount]) });
+  await r.start();
+  assert.deepEqual(settings, [0.3]);   // the cached event is not taken as settings...
+  assert.deepEqual(events, []);        // ...and not replayed as a live donation
+  await r.publishEvent('donation', { amount: 10 });
+  assert.equal(posts[0].kind, 'event');
+  FakeES.last.onmessage({ data: JSON.stringify({ event: 'message', message: JSON.stringify(posts[0]) }) });
+  assert.deepEqual(events, [['donation', 10]]);
+  r.stop();
+});
+
 test('no room → inert (no network at all)', async () => {
   let called = false;
   const r = createRemote({ room: '', fetchFn: async () => { called = true; }, ES: FakeES, onSettings() {} });

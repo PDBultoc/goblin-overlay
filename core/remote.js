@@ -22,11 +22,16 @@ export function stripSecrets(s) {
 }
 
 const parse = (s) => { try { return JSON.parse(s); } catch { return null; } };
-const settingsOf = (evt) => (evt && evt.event === 'message' ? parse(evt.message) : null);
+const bodyOf = (evt) => (evt && evt.event === 'message' ? parse(evt.message) : null);
+// A room carries two kinds of messages: settings snapshots and live events
+// (Streamlabs donations etc., wrapped as {kind:'event'}).
+const isEvent = (b) => Boolean(b && b.kind === 'event');
+const settingsOf = (evt) => { const b = bodyOf(evt); return b && !isEvent(b) ? b : null; };
 
 export function createRemote({
   room,
   onSettings,
+  onEvent = () => {},
   onStatus = () => {},
   fetchFn = globalThis.fetch,
   ES = globalThis.EventSource,
@@ -54,7 +59,10 @@ export function createRemote({
     // Then live updates; EventSource reconnects by itself.
     if (typeof ES === 'function') {
       es = new ES(url + '/sse');
-      es.onmessage = (ev) => deliver(settingsOf(parse(ev && ev.data)));
+      es.onmessage = (ev) => {
+        const b = bodyOf(parse(ev && ev.data));
+        if (isEvent(b)) { try { onEvent(b.type, b.payload); } catch { /* ignore */ } } else deliver(b);
+      };
       es.onerror = () => status(false, 'sync reconnecting');
       es.onopen = () => status(true);
     }
@@ -77,10 +85,17 @@ export function createRemote({
     timer = setTimer(flush, debounceMs);
   }
 
+  // Live events go out at once (no debounce); old ones are never replayed from the cache.
+  async function publishEvent(type, payload) {
+    if (!live) return;
+    try { await fetchFn(url, { method: 'POST', body: JSON.stringify({ kind: 'event', type, payload, t: Date.now() }) }); }
+    catch { status(false, 'sync offline'); }
+  }
+
   function stop() {
     if (timer) clearTimer(timer);
     if (es) es.close();
   }
 
-  return { start, publish, stop };
+  return { start, publish, publishEvent, stop };
 }
