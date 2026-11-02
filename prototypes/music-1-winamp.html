@@ -1,0 +1,50 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Music 1 · Winamp bars</title>
+<link rel="stylesheet" href="../styles/toxic.css">
+<style>
+html,body{margin:0;background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;background:url(game.webp) center/cover}
+.mu{position:absolute;left:905px;top:928px;width:560px;height:120px;display:grid;grid-template-columns:96px 1fr;gap:14px;padding:12px 14px}
+.mu img{width:96px;height:96px;border-radius:4px;box-shadow:0 0 0 1px rgba(168,255,31,.35)}
+.mu .rt{display:grid;grid-template-rows:22px 1fr 10px;gap:6px;min-width:0}
+.lcd{font:700 16px/22px 'Share Tech Mono',Consolas,monospace;color:var(--acid);background:#020602;border:1px solid rgba(168,255,31,.25);
+  white-space:nowrap;overflow:hidden;padding:0 8px;text-shadow:0 0 6px rgba(168,255,31,.7)}
+.lcd span{display:inline-block;padding-left:100%;animation:mq 14s linear infinite}
+@keyframes mq{to{transform:translateX(-100%)}}
+canvas{width:100%;height:100%;display:block}
+.pb{position:relative;height:4px;background:rgba(255,255,255,.08);margin-top:3px}
+.pb i{position:absolute;left:0;top:0;bottom:0;width:37%;background:var(--acid);box-shadow:0 0 8px var(--acid)}
+.lbl{position:absolute;left:24px;top:24px;font:800 28px Oxanium,sans-serif;color:#fff;text-shadow:0 2px 8px #000}
+</style></head><body>
+<div id="stage" class="gx">
+  <div class="lbl">1 · WINAMP — spectrum bars + LCD marquee</div>
+  <div class="pn slime mu">
+    <img id="cv" alt="">
+    <div class="rt">
+      <div class="lcd"><span id="tt"></span></div>
+      <canvas id="c" width="420" height="58"></canvas>
+      <div class="pb"><i></i></div>
+    </div>
+  </div>
+</div>
+<script type="module">
+import { NOW, getSpectrum, cover, fmt, stageFit } from './music-shared.js';
+stageFit(stage);
+cv.src = cover(96);
+tt.textContent = `♫ ${NOW.title}  ·  ${fmt(NOW.duration * NOW.progress)} / ${fmt(NOW.duration)}  ·  ♫ ${NOW.title}`;
+const g = c.getContext('2d'), peaks = new Array(32).fill(0);
+(function draw() {
+  const sp = getSpectrum(32), w = c.width / 32;
+  g.clearRect(0, 0, c.width, c.height);
+  sp.forEach((v, i) => {
+    const h = Math.round(v * c.height / 4) * 4;          // stepped segments, like Winamp
+    for (let y = 0; y < h; y += 4) {
+      g.fillStyle = y > c.height * 0.75 ? '#ffe14a' : '#a8ff1f';
+      g.fillRect(i * w + 1, c.height - y - 3, w - 3, 3);
+    }
+    peaks[i] = Math.max(peaks[i] - 0.6, h);
+    g.fillStyle = '#eaffc8'; g.fillRect(i * w + 1, c.height - peaks[i] - 5, w - 3, 2);
+  });
+  requestAnimationFrame(draw);
+})();
+</script></body></html>

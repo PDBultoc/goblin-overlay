@@ -1,0 +1,42 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Music 2 · Neon oscilloscope</title>
+<link rel="stylesheet" href="../styles/toxic.css">
+<style>
+html,body{margin:0;background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;background:url(game.webp) center/cover}
+.mu{position:absolute;left:905px;top:928px;width:560px;height:120px;padding:10px 14px 8px;display:grid;grid-template-rows:40px 1fr}
+.top{display:flex;align-items:center;gap:12px;min-width:0}
+.top img{width:40px;height:40px;border-radius:50%;animation:spin 6s linear infinite;box-shadow:0 0 12px rgba(168,255,31,.5)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tx{min-width:0}
+.t{font:700 17px/1.1 Inter,sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.a{font:800 12px/1.3 Oxanium,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--acid)}
+.tm{margin-left:auto;font:700 14px Oxanium,sans-serif;color:var(--mute)}
+canvas{width:100%;height:100%;display:block}
+.lbl{position:absolute;left:24px;top:24px;font:800 28px Oxanium,sans-serif;color:#fff;text-shadow:0 2px 8px #000}
+</style></head><body>
+<div id="stage" class="gx">
+  <div class="lbl">2 · OSCILLOSCOPE — Media Player style glowing wave</div>
+  <div class="pn slime mu">
+    <div class="top"><img id="cv" alt=""><div class="tx"><div class="t" id="tt"></div><div class="a" id="ar"></div></div><div class="tm" id="tm"></div></div>
+    <canvas id="c" width="532" height="62"></canvas>
+  </div>
+</div>
+<script type="module">
+import { NOW, getWave, cover, fmt, stageFit } from './music-shared.js';
+stageFit(stage);
+cv.src = cover(80); tt.textContent = NOW.album; ar.textContent = NOW.artist; tm.textContent = `${fmt(NOW.duration * NOW.progress)} / ${fmt(NOW.duration)}`;
+const g = c.getContext('2d');
+(function draw() {
+  // trail: fade the previous frame instead of clearing → phosphor afterglow
+  g.globalCompositeOperation = 'destination-out'; g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(0, 0, c.width, c.height);
+  g.globalCompositeOperation = 'source-over';
+  const w = getWave(200), mid = c.height / 2;
+  for (const [lw, a] of [[6, .18], [3, .45], [1.4, 1]]) {
+    g.beginPath();
+    w.forEach((v, i) => { const x = i / (w.length - 1) * c.width, y = mid + v * mid * .9; i ? g.lineTo(x, y) : g.moveTo(x, y); });
+    g.strokeStyle = `rgba(168,255,31,${a})`; g.lineWidth = lw; g.shadowColor = '#a8ff1f'; g.shadowBlur = lw * 3; g.stroke();
+  }
+  requestAnimationFrame(draw);
+})();
+</script></body></html>
