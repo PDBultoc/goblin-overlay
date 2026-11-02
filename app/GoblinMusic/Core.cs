@@ -21,17 +21,18 @@ public sealed class Agc
     }
 }
 
-// One 1/40 s frame: loudness (AGC, 0..1) + spectrum shape (Bands.Count values, 0..1, loudest = 1).
-public readonly record struct Frame(double Level, double[] Bands);
+// One 1/40 s frame: loudness (AGC, 0..1) + scope wave (Scope.Points values, -1..1).
+public readonly record struct Frame(double Level, double[] Wave);
 
 // Accumulates interleaved float samples and emits one Frame per window (1/40 s).
 public sealed class LevelMeter
 {
-    public const int FftSize = 1024;
+    private const int Ring = 4096;
     private readonly int _window, _channels, _rate;
     private readonly double _dt;
     private readonly Agc _agc = new();
-    private readonly float[] _ring = new float[FftSize];
+    private readonly Scope _scope = new();
+    private readonly float[] _ring = new float[Ring];
     private int _ringPos, _ch;
     private double _sum, _mono;
     private int _n;
@@ -49,73 +50,73 @@ public sealed class LevelMeter
         {
             _sum += (double)s * s;
             _mono += s;
-            if (++_ch == _channels) { _ring[_ringPos] = (float)(_mono / _channels); _ringPos = (_ringPos + 1) % FftSize; _mono = 0; _ch = 0; }
+            if (++_ch == _channels) { _ring[_ringPos] = (float)(_mono / _channels); _ringPos = (_ringPos + 1) % Ring; _mono = 0; _ch = 0; }
             if (++_n < _window) continue;
             var level = Math.Round(_agc.Next(Math.Sqrt(_sum / _n), _dt), 3);
-            emit(new Frame(level, Bands.Shape(Ordered(), _rate)));
+            emit(new Frame(level, _scope.Shape(Latest(Scope.Block), _rate)));
             _sum = 0; _n = 0;
         }
     }
 
-    private float[] Ordered()
+    // The newest n mono samples, oldest first.
+    private float[] Latest(int n)
     {
-        var o = new float[FftSize];
-        for (var i = 0; i < FftSize; i++) o[i] = _ring[(_ringPos + i) % FftSize];
+        var o = new float[n];
+        for (var i = 0; i < n; i++) o[i] = _ring[(_ringPos - n + i + Ring) % Ring];
         return o;
     }
 }
 
-// 8 log-spaced bands, 60 Hz – 12 kHz, as a spectrum SHAPE: each band's magnitude relative to
-// the loudest band, compressed with ^0.6 so quieter bands still move the wave.
-public static class Bands
+// Oscilloscope view of the real audio (Paul, 2026-11-03: the waves must stand still and
+// move with the music, not scroll). Low-passed so the line stays smooth, triggered on a
+// rising zero crossing like a real scope so the picture does not drift sideways, and
+// normalised by a slowly falling peak so quiet and loud passages both fill the strip.
+public sealed class Scope
 {
-    public const int Count = 8;
-    public const double LowHz = 60, HighHz = 12000;
+    // 2400 samples = 50 ms at 48 kHz; with the bass kept (150 Hz low-pass) that is the 4-6 big
+    // humps of Paul's reference; 250 Hz / 43 ms looked like ~18 small ripples.
+    public const int Points = 96, Span = 2400, Search = 1024, Block = Span + Search;
+    public const double CutoffHz = 150, PeakFloor = 0.01, PeakDecay = 0.97;
+    private double _peak = PeakFloor;
 
-    public static double[] Shape(float[] block, int sampleRate)
+    // block: mono samples, oldest first, length Block.
+    public double[] Shape(float[] block, int sampleRate)
     {
-        var n = block.Length;
-        var re = new double[n]; var im = new double[n];
-        for (var i = 0; i < n; i++) re[i] = block[i] * (0.5 - 0.5 * Math.Cos(2 * Math.PI * i / (n - 1))); // Hann
-        Fft(re, im);
-        var mags = new double[Count];
-        for (var b = 0; b < Count; b++)
+        var lp = LowPass(block, sampleRate);
+        var start = Trigger(lp);
+        var outp = new double[Points];
+        double peak = 0;
+        var per = (double)Span / Points;
+        for (var p = 0; p < Points; p++)
         {
-            var f0 = LowHz * Math.Pow(HighHz / LowHz, (double)b / Count);
-            var f1 = LowHz * Math.Pow(HighHz / LowHz, (double)(b + 1) / Count);
-            int k0 = Math.Max(1, (int)(f0 * n / sampleRate)), k1 = Math.Max(k0 + 1, (int)(f1 * n / sampleRate));
+            int a = start + (int)(p * per), b = start + (int)((p + 1) * per);
             double acc = 0;
-            for (var k = k0; k < k1 && k < n / 2; k++) acc += re[k] * re[k] + im[k] * im[k];
-            mags[b] = Math.Sqrt(acc / (k1 - k0));
+            for (var i = a; i < b; i++) acc += lp[i];
+            outp[p] = acc / Math.Max(1, b - a);
+            peak = Math.Max(peak, Math.Abs(outp[p]));
         }
-        var max = mags.Max();
-        return mags.Select(m => max > 1e-9 ? Math.Round(Math.Pow(m / max, 0.6), 3) : 0).ToArray();
+        _peak = Math.Max(Math.Max(peak, PeakFloor), _peak * PeakDecay);
+        for (var p = 0; p < Points; p++) outp[p] = Math.Round(Math.Clamp(outp[p] / _peak, -1, 1), 2);
+        return outp;
     }
 
-    // In-place iterative radix-2 FFT (n must be a power of two).
-    public static void Fft(double[] re, double[] im)
+    // Two one-pole passes (12 dB/oct) at CutoffHz.
+    public static double[] LowPass(float[] x, int sampleRate)
     {
-        var n = re.Length;
-        for (int i = 1, j = 0; i < n; i++)
-        {
-            var bit = n >> 1;
-            for (; (j & bit) != 0; bit >>= 1) j ^= bit;
-            j ^= bit;
-            if (i < j) { (re[i], re[j]) = (re[j], re[i]); (im[i], im[j]) = (im[j], im[i]); }
-        }
-        for (var len = 2; len <= n; len <<= 1)
-        {
-            var ang = -2 * Math.PI / len;
-            for (var i = 0; i < n; i += len)
-                for (var k = 0; k < len / 2; k++)
-                {
-                    double wr = Math.Cos(ang * k), wi = Math.Sin(ang * k);
-                    int a = i + k, b = a + len / 2;
-                    double xr = re[b] * wr - im[b] * wi, xi = re[b] * wi + im[b] * wr;
-                    re[b] = re[a] - xr; im[b] = im[a] - xi;
-                    re[a] += xr; im[a] += xi;
-                }
-        }
+        var a = 1 - Math.Exp(-2 * Math.PI * CutoffHz / sampleRate);
+        var y = new double[x.Length];
+        double s1 = 0, s2 = 0;
+        for (var i = 0; i < x.Length; i++) { s1 += a * (x[i] - s1); s2 += a * (s1 - s2); y[i] = s2; }
+        return y;
+    }
+
+    // First rising zero crossing in the second half of the search area (the first half lets
+    // the filter settle); none (silence, DC) -> the end of the search area.
+    public static int Trigger(double[] lp)
+    {
+        for (var i = Search / 2; i < Search; i++)
+            if (lp[i - 1] < 0 && lp[i] >= 0) return i;
+        return Search;
     }
 }
 
@@ -143,12 +144,12 @@ public static class Sse
 {
     public static string Frame(string evt, string json) => $"event: {evt}\ndata: {json}\n\n";
 
-    // `lv` payload: {"l":[level,...],"b":[[8 bands],...]} — one entry per 1/40 s frame.
+    // `lv` payload: {"l":[level,...],"w":[[96 scope points],...]} — one entry per 1/40 s frame.
     public static string Levels(IReadOnlyList<Frame> frames)
     {
         static string N(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
-        var sb = new StringBuilder("{\"l\":[").AppendJoin(',', frames.Select(f => N(f.Level))).Append("],\"b\":[");
-        sb.AppendJoin(',', frames.Select(f => "[" + string.Join(',', f.Bands.Select(N)) + "]"));
+        var sb = new StringBuilder("{\"l\":[").AppendJoin(',', frames.Select(f => N(f.Level))).Append("],\"w\":[");
+        sb.AppendJoin(',', frames.Select(f => "[" + string.Join(',', f.Wave.Select(N)) + "]"));
         return sb.Append("]}").ToString();
     }
 

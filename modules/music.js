@@ -2,8 +2,10 @@
 // Paul's pick 2026-11-03): the whole strip is a screen with three overlapping neon waves
 // and feedback trails; round cover, title and artist bottom-left.
 // Data comes from the local GoblinMusic app (SSE on 127.0.0.1:47800): `np` events carry the
-// song, `lv` events carry 40 frames/s of Spotify's own audio — loudness `l` and an 8-band
-// spectrum shape `b`. Bass swells the long waves, treble ripples the short ones.
+// song, `lv` events carry 40 frames/s of Spotify's own audio — loudness `l` and a triggered,
+// low-passed oscilloscope trace `w` (96 points, -1..1). The waves stand still and move only
+// with the music (Paul, 2026-11-03: synthetic scrolling sines read as a repeating pattern);
+// the main line is the newest trace, the two fainter ones are the previous traces (echo).
 // Shares the bottom strip with the challenges board: hidden while that holds it (bus `strip`).
 const CSS = `
 [data-mod=music] .mu{position:absolute;left:905px;top:928px;width:560px;height:120px;box-sizing:border-box;overflow:hidden;padding:0;
@@ -19,19 +21,20 @@ const CSS = `
 
 const FRAME_MS = 25; // the app sends 40 frames per second
 const RETRY_MS = 3000;
-export const NBANDS = 8;
+export const POINTS = 96;
 
 export const visible = ({ connected, status, busy }) => Boolean(connected && status === 'playing' && !busy);
 
-const clamp01 = (x) => { const v = Number(x); return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0; };
+const clamp = (x, lo, hi) => { const v = Number(x); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : 0; };
 
 // Queue a batch of frames; the last one is "now", earlier ones FRAME_MS apart.
-export function stampFrames(queue, levels, bands, now) {
+// A trace that is missing or the wrong length becomes a flat line.
+export function stampFrames(queue, levels, waves, now) {
   if (!Array.isArray(levels)) return queue;
   const n = levels.length;
   levels.forEach((v, i) => {
-    const b = Array.isArray(bands) && Array.isArray(bands[i]) ? bands[i] : [];
-    queue.push({ t: now - (n - 1 - i) * FRAME_MS, v: clamp01(v), b: Array.from({ length: NBANDS }, (_, k) => clamp01(b[k])) });
+    const w = Array.isArray(waves) && Array.isArray(waves[i]) && waves[i].length === POINTS ? waves[i] : [];
+    queue.push({ t: now - (n - 1 - i) * FRAME_MS, v: clamp(v, 0, 1), w: Array.from({ length: POINTS }, (_, k) => clamp(w[k], -1, 1)) });
   });
   return queue;
 }
@@ -43,29 +46,16 @@ export function dueFrames(queue, now, delayMs = 0) {
   return out;
 }
 
-// Fast attack, slow release, so the waves jump with a beat and settle smoothly.
-export const follow = (cur, target, attack = 0.55, release = 0.12) => cur + (target - cur) * (target > cur ? attack : release);
-
-// One wave: a sum of sines, band k = (1.6 + 0.6k) cycles across the strip, weighted by the
-// band's share of the spectrum, scaled by loudness. Values stay in [-1, 1].
-// Normalised by the bands' energy (sqrt of the sum of squares), not their sum: sines of
-// different lengths partly cancel, and a sum-normalised wave looked flat on real music.
-export function waveShape(bands, level, phases, n, offset = 0) {
-  let wsum = 0;
-  for (let k = 0; k < NBANDS; k++) wsum += (bands[k] || 0) ** 2;
-  wsum = Math.sqrt(wsum) * 1.1;
-  const out = new Array(n);
-  for (let i = 0; i < n; i++) {
-    const x = n > 1 ? i / (n - 1) : 0;
-    let y = 0;
-    for (let k = 0; k < NBANDS; k++) {
-      const a = bands[k] || 0;
-      if (a) y += a * Math.sin(2 * Math.PI * (1.6 + 0.6 * k) * x + (phases[k] || 0) + offset * (1 + k * 0.15));
-    }
-    out[i] = wsum > 0 ? Math.max(-1, Math.min(1, (y / wsum) * level)) : 0;
-  }
-  return out;
+// Ease the drawn trace toward the newest one (k = share of the gap closed per frame), so
+// 40 traces/s look like one line moving with the music instead of flicker.
+export function easeTrace(cur, target, k = 0.5) {
+  for (let i = 0; i < cur.length; i++) cur[i] += ((target[i] || 0) - cur[i]) * k;
+  return cur;
 }
+
+// Trace -> y per point. Loudness scales it a little (0.55..1) so a quiet verse is calmer than
+// the chorus, while the app's own normalisation keeps it from going flat.
+export const traceY = (w, level, mid, half) => w.map((v) => mid + v * half * (0.55 + 0.45 * level));
 
 function injectCss(name, css) {
   if (document.head.querySelector(`style[data-mod="${name}"]`)) return;
@@ -92,13 +82,14 @@ export function mount(root, ctx = {}) {
   root.appendChild(wrap);
   const $ = (s) => box.querySelector(s);
   const img = $('img'), tt = $('.t'), ar = $('.a'), cv = $('canvas');
-  const g = cv.getContext('2d'), W = cv.width, H = cv.height, PTS = 140;
-  const LAYERS = [['#a8ff1f', 1, 0], ['#5dff9e', 0.7, 1.7], ['#e8ff6a', 0.5, 3.1]];
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  // [colour, line width, how many traces back]: newest bright line + two echoes 75 / 150 ms old.
+  const LAYERS = [['#e8ff6a', 1.5, 6], ['#5dff9e', 1.8, 3], ['#a8ff1f', 2.4, 0]];
 
   let connected = false, busy = false, np = null, artKey = '', es = null, retry = 0, raf = 0, dead = false;
   const queue = [];
   let lv = 0;
-  const bands = new Array(NBANDS).fill(0), phases = new Array(NBANDS).fill(0);
+  const trace = new Array(POINTS).fill(0), past = [];
 
   const shown = () => visible({ connected, status: np && np.status, busy });
   function apply() { box.classList.toggle('off', !shown()); }
@@ -118,7 +109,7 @@ export function mount(root, ctx = {}) {
     es.onopen = () => { connected = true; apply(); };
     es.addEventListener('np', (ev) => { try { onNp(JSON.parse(ev.data)); } catch { /* bad frame */ } });
     es.addEventListener('lv', (ev) => {
-      try { const d = JSON.parse(ev.data); stampFrames(queue, d.l, d.b, performance.now()); } catch { /* bad frame */ }
+      try { const d = JSON.parse(ev.data); stampFrames(queue, d.l, d.w, performance.now()); } catch { /* bad frame */ }
       if (queue.length > 400) queue.splice(0, queue.length - 400);
     });
     es.onerror = () => {
@@ -134,25 +125,26 @@ export function mount(root, ctx = {}) {
     raf = requestAnimationFrame(draw);
     const due = dueFrames(queue, performance.now(), delayMs);
     for (const f of due) {
-      lv = follow(lv, f.v);
-      for (let k = 0; k < NBANDS; k++) bands[k] = follow(bands[k], f.b[k], 0.4, 0.1);
+      lv += (f.v - lv) * 0.3;
+      easeTrace(trace, f.w);
+      past.push(trace.slice()); if (past.length > 8) past.shift();
     }
-    if (!due.length) lv *= 0.97; // stream gap: let the waves settle
+    if (!due.length) { lv *= 0.97; easeTrace(trace, [], 0.08); } // stream gap: settle to flat
     if (!shown()) return;
-    for (let k = 0; k < NBANDS; k++) phases[k] += (0.02 + 0.012 * k) * (0.5 + lv);
-    // WMP "Ambience" feel: the previous frame zooms out and fades into trails.
-    g.globalAlpha = 0.88;
-    g.drawImage(cv, -6, -3, W + 12, H + 6);
-    g.globalAlpha = 1;
-    g.fillStyle = 'rgba(0,8,2,.18)'; g.fillRect(0, 0, W, H);
-    for (const [col, amp, off] of LAYERS) {
-      const w = waveShape(bands, lv, phases, PTS, off);
+    // Short glow trails, no motion of their own: the picture moves only with the audio.
+    g.fillStyle = 'rgba(0,8,2,.42)'; g.fillRect(0, 0, W, H);
+    for (const [col, width, back] of LAYERS) {
+      const w = back === 0 ? trace : past[past.length - 1 - back];
+      if (!w) continue;
+      const ys = traceY(w, lv, H * 0.45, H * 0.4);
       g.beginPath();
-      w.forEach((v, i) => {
-        const x = i / (PTS - 1) * W, y = H * 0.45 + v * amp * H * 0.42;
-        i ? g.lineTo(x, y) : g.moveTo(x, y);
-      });
-      g.strokeStyle = col; g.lineWidth = 2; g.shadowColor = col; g.shadowBlur = 10; g.stroke();
+      g.moveTo(0, ys[0]);
+      for (let i = 1; i < POINTS - 1; i++) {
+        const x = i / (POINTS - 1) * W, xn = (i + 1) / (POINTS - 1) * W;
+        g.quadraticCurveTo(x, ys[i], (x + xn) / 2, (ys[i] + ys[i + 1]) / 2); // smooth through the points
+      }
+      g.lineTo(W, ys[POINTS - 1]);
+      g.strokeStyle = col; g.lineWidth = width; g.shadowColor = col; g.shadowBlur = 10; g.stroke();
     }
     g.shadowBlur = 0;
   }

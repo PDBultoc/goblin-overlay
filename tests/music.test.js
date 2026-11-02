@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { scheduleOf, inSlot } from '../modules/challenges.js';
-import { visible, stampFrames, dueFrames, follow, waveShape, NBANDS } from '../modules/music.js';
+import { visible, stampFrames, dueFrames, easeTrace, traceY, POINTS } from '../modules/music.js';
 import { DEFAULTS } from '../core/settings.js';
 
 test('challenges default schedule: 3 tiers x 10 s x 2 rounds every 20 min', () => {
@@ -32,35 +32,31 @@ test('music shows only when connected, playing and the strip is free', () => {
 });
 
 test('a frame batch is spread back in time at 25 ms per frame, then released after the delay', () => {
-  const b = [1, 0.5, 0, 0, 0, 0, 0, 0];
-  const q = stampFrames([], [0.1, 0.2, 0.3], [b, b, b], 1000);
+  const w = Array.from({ length: POINTS }, (_, i) => Math.sin(i / 8));
+  const q = stampFrames([], [0.1, 0.2, 0.3], [w, w, w], 1000);
   assert.deepEqual(q.map((x) => x.t), [950, 975, 1000]);
   const out = dueFrames(q, 1015, 40); // 950+40, 975+40 <= 1015; 1000+40 is not
   assert.deepEqual(out.map((x) => x.v), [0.1, 0.2]);
-  assert.deepEqual(out[0].b, b);
+  assert.deepEqual(out[0].w, w);
   assert.deepEqual(q.map((x) => x.v), [0.3]);
   assert.deepEqual(stampFrames([], 'junk', [], 1), []);
-  const bad = stampFrames([], [2, -1, NaN], null, 0);
+  const bad = stampFrames([], [2, -1, NaN], [[5, 5]], 0);
   assert.deepEqual(bad.map((x) => x.v), [1, 0, 0]);
-  assert.deepEqual(bad[0].b, new Array(NBANDS).fill(0)); // old app without bands: flat
+  assert.deepEqual(bad[0].w, new Array(POINTS).fill(0)); // wrong length / missing: flat line
+  assert.ok(stampFrames([], [1], [w.map(() => 9)], 0)[0].w.every((v) => v === 1)); // clamped
 });
 
-test('follow jumps up fast and falls back slowly', () => {
-  assert.ok(follow(0, 1) > 0.5);
-  assert.ok(follow(1, 0) > 0.85);
+test('easeTrace closes half the gap per frame and settles on the target', () => {
+  const cur = [0, 0], t = [1, -1];
+  assert.deepEqual(easeTrace(cur, t), [0.5, -0.5]);
+  for (let i = 0; i < 20; i++) easeTrace(cur, t);
+  assert.ok(Math.abs(cur[0] - 1) < 1e-4 && Math.abs(cur[1] + 1) < 1e-4);
+  assert.deepEqual(easeTrace([1], []), [0.5]); // no data: drifts back to flat
 });
 
-test('waveShape: flat in silence, bounded, bass gives one long swell, treble many ripples', () => {
-  const zero = new Array(NBANDS).fill(0), ph = new Array(NBANDS).fill(0);
-  assert.deepEqual(waveShape(zero, 1, ph, 5), [0, 0, 0, 0, 0]);
-  const crossings = (w) => w.slice(1).filter((v, i) => Math.sign(v) !== Math.sign(w[i]) && v !== 0).length;
-  const bass = [1, 0, 0, 0, 0, 0, 0, 0], treble = [0, 0, 0, 0, 0, 0, 0, 1];
-  const wb = waveShape(bass, 1, ph, 140, 0.3), wt = waveShape(treble, 1, ph, 140, 0.3);
-  assert.ok(wb.every((v) => v >= -1 && v <= 1) && wt.every((v) => v >= -1 && v <= 1));
-  assert.ok(crossings(wb) <= 4, 'bass: at most 4 zero crossings');
-  assert.ok(crossings(wt) >= 10, 'treble: at least 10 zero crossings');
-  const quiet = waveShape(bass, 0.2, ph, 140, 0.3);
-  assert.ok(Math.max(...quiet.map(Math.abs)) < Math.max(...wb.map(Math.abs)) / 2, 'loudness scales the wave');
+test('traceY: centred, quiet passages calmer than loud ones', () => {
+  assert.deepEqual(traceY([0, 1, -1], 1, 50, 40), [50, 90, 10]);
+  assert.deepEqual(traceY([1], 0, 50, 40), [72]); // 55% swing at silence-level loudness
 });
 
 test('music defaults point at the local app', () => {

@@ -30,33 +30,45 @@ public class CoreTests
         Assert.Equal(0, a.Next(Rms(-70), 0.025)); // hiss 30 dB under the peak floor stays at 0
     }
 
-    private static float[] Tone(double hz, int frames, int channels = 2, int rate = 48000)
+    private static float[] Tone(double hz, int frames, int channels = 2, int rate = 48000, int skip = 0)
     {
         var s = new float[frames * channels];
         for (var i = 0; i < frames; i++)
-            for (var c = 0; c < channels; c++) s[i * channels + c] = (float)(0.5 * Math.Sin(2 * Math.PI * hz * i / rate));
+            for (var c = 0; c < channels; c++) s[i * channels + c] = (float)(0.5 * Math.Sin(2 * Math.PI * hz * (i + skip) / rate));
         return s;
     }
 
     [Fact]
-    public void Meter_emits_40_frames_per_second_with_8_bands()
+    public void Meter_emits_40_frames_per_second_with_a_scope_wave()
     {
         var m = new LevelMeter(48000, 2);
         var got = new List<Frame>();
-        m.Add(Tone(1000, 48000), got.Add);
+        m.Add(Tone(100, 48000), got.Add);
         Assert.Equal(40, got.Count);
-        Assert.All(got, f => Assert.Equal(Bands.Count, f.Bands.Length));
+        Assert.All(got, f => Assert.Equal(Scope.Points, f.Wave.Length));
         Assert.Equal(1, got[^1].Level, 2); // steady tone = its own peak
     }
 
     [Fact]
-    public void Bands_put_a_bass_tone_low_and_a_treble_tone_high()
+    public void Scope_stands_still_whatever_the_phase_of_the_audio()
     {
-        int Loudest(double hz) { var b = Bands.Shape(Tone(hz, 1024, 1), 48000); return Array.IndexOf(b, b.Max()); }
-        Assert.Equal(0, Loudest(80));     // band 0 = 60–117 Hz
-        Assert.Equal(7, Loudest(9000));   // band 7 = 6.1–12 kHz
-        Assert.True(Loudest(1000) is 3 or 4);
-        Assert.All(Bands.Shape(new float[1024], 48000), v => Assert.Equal(0, v)); // silence
+        // Two blocks of the same 100 Hz tone, started 137 samples apart: the trigger
+        // must line them up so the drawn wave does not slide sideways.
+        var a = new Scope().Shape(Tone(100, Scope.Block, 1), 48000);
+        var b = new Scope().Shape(Tone(100, Scope.Block, 1, skip: 137), 48000);
+        Assert.True(a.Zip(b, (x, y) => Math.Abs(x - y)).Max() < 0.1);
+        Assert.InRange(Math.Abs(a[0]), 0, 0.25);              // starts at the rising zero crossing (first point = mean of 25 samples after it)
+        Assert.True(a[2] > a[0]);
+        Assert.Equal(1, a.Max(Math.Abs), 1);                  // fills the strip
+        Assert.All(new Scope().Shape(new float[Scope.Block], 48000), v => Assert.Equal(0, v)); // silence: flat
+    }
+
+    [Fact]
+    public void Scope_low_pass_keeps_bass_and_removes_treble()
+    {
+        double Amp(double hz) => Scope.LowPass(Tone(hz, 4800, 1), 48000).Skip(2400).Max(Math.Abs);
+        Assert.True(Amp(60) > 0.4);    // 0.5 in, nearly all of the bass out
+        Assert.True(Amp(5000) < 0.01); // treble ripple gone, so the line stays smooth
     }
 
     [Fact]
@@ -80,8 +92,8 @@ public class CoreTests
     public void Sse_frame_and_request_line()
     {
         Assert.Equal("event: lv\ndata: {\"l\":[0.5]}\n\n", Sse.Frame("lv", "{\"l\":[0.5]}"));
-        Assert.Equal("{\"l\":[0.5,1],\"b\":[[1,0.25],[0,0]]}",
-            Sse.Levels(new[] { new Frame(0.5, new[] { 1.0, 0.25 }), new Frame(1, new[] { 0.0, 0 }) }));
+        Assert.Equal("{\"l\":[0.5,1],\"w\":[[1,-0.25],[0,0]]}",
+            Sse.Levels(new[] { new Frame(0.5, new[] { 1.0, -0.25 }), new Frame(1, new[] { 0.0, 0 }) }));
         Assert.Equal(("GET", "/stream"), Sse.RequestLine("GET /stream?x=1 HTTP/1.1"));
         Assert.Equal(("", ""), Sse.RequestLine(""));
         var head = System.Text.Encoding.ASCII.GetString(Sse.Head(204, "No Content", null, null));
