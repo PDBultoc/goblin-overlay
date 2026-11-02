@@ -18,7 +18,8 @@
 - Exe is never committed (`app/**/bin`, `app/**/obj` ignored); it ships as a GitHub Release asset (D2, needs Paul's yes).
 
 ## Decisions (owner)
-- D1 (OPEN, Paul): NAudio's process loopback (`WasapiRecorderBuilder.WithProcessLoopback`) exists only in NAudio.Wasapi 3.3.0, which targets net9.0 (checked: `~/.nuget/packages/naudio.wasapi/3.3.0/lib/net9.0`; 2.2.1 has no ActivateProcessLoopbackAsync). A = install .NET 10 SDK (LTS) and use NAudio 3.3.0 (recommended); B = stay on .NET 8, hand-written COM interop (~150 lines, higher risk).
+- RESOLVED 2026-11-03: D1 = A (Paul; .NET SDK 10.0.403 installed). LOOK = prototype 2 "Windows Media Player" (Paul, with a screenshot) — not 1; the `lv` frames therefore also carry an 8-band spectrum `b`. Levels use AGC (12 dB window under the recent peak) after a fixed scale saturated on a loud chorus.
+- D1 (was open): NAudio's process loopback (`WasapiRecorderBuilder.WithProcessLoopback`) exists only in NAudio.Wasapi 3.3.0, which targets net9.0 (checked: `~/.nuget/packages/naudio.wasapi/3.3.0/lib/net9.0`; 2.2.1 has no ActivateProcessLoopbackAsync). A = install .NET 10 SDK (LTS) and use NAudio 3.3.0 (recommended); B = stay on .NET 8, hand-written COM interop (~150 lines, higher risk).
 - D2 (OPEN, Paul): publish the exe as a Release asset on the public repo.
 - D3: wave/audio alignment knob `music.delayMs` (default 0) in the panel, because OBS adds its own audio delay.
 
