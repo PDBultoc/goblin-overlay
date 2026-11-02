@@ -98,12 +98,12 @@ export function mount(root, ctx = {}) {
   const img = $('img'), tt = $('.t'), ar = $('.a'), cv = $('canvas');
   const g = cv.getContext('2d'), W = cv.width, H = cv.height;
   // Drawn back to front: [band, colour, line width, swing (share of half height), trace easing,
-  // centre line (share of height)]. Centres slightly apart and colours distinct, so the three
-  // parts read as three lines even where they overlap.
+  // centre line (share of height)]. Centres almost on one axis (Paul, 2026-11-03: same axis or
+  // very close); distinct colours and widths keep the three parts apart.
   const LAYERS = [
-    [2, '#f4ff9a', 1.3, 0.24, 0.7, 0.36],
-    [1, '#38f2d0', 1.9, 0.32, 0.55, 0.46],
-    [0, '#a8ff1f', 2.6, 0.42, 0.5, 0.55],
+    [2, '#f4ff9a', 1.3, 0.24, 0.7, 0.43],
+    [1, '#38f2d0', 1.9, 0.32, 0.55, 0.45],
+    [0, '#a8ff1f', 2.6, 0.42, 0.5, 0.47],
   ];
 
   let connected = false, busy = false, np = null, artKey = '', es = null, retry = 0, raf = 0, dead = false;
