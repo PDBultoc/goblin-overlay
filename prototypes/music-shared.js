@@ -27,6 +27,13 @@ export function getWave(n = 256) {
   });
 }
 
+// Overall loudness per frame (0–1), for scrolling waveforms that plot amplitude over time.
+export function getLevel() {
+  const t = (performance.now() - t0) / 1000;
+  const k = beat(t), snare = beat(t + 0.24) * 0.6;
+  return Math.min(1, 0.22 + 0.55 * k + 0.25 * snare + 0.12 * Math.abs(Math.sin(t * 1.3)) + 0.06 * Math.random());
+}
+
 export function cover(size = 96) {
   // Placeholder album art (a real one comes from Spotify's image URL).
   const c = document.createElement('canvas'); c.width = c.height = size;

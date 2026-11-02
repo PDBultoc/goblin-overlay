@@ -1,0 +1,49 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Music 2 · Windows Media Player</title>
+<link rel="stylesheet" href="../styles/toxic.css">
+<style>
+html,body{margin:0;background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;background:url(game.webp) center/cover}
+.mu{position:absolute;left:905px;top:928px;width:560px;height:120px;overflow:hidden;padding:0}
+.mu canvas{position:absolute;inset:0;width:100%;height:100%}
+.ov{position:absolute;left:14px;right:14px;bottom:8px;display:flex;align-items:flex-end;gap:10px;pointer-events:none}
+.ov img{width:34px;height:34px;border-radius:50%;box-shadow:0 0 0 1px rgba(168,255,31,.5)}
+.t{font:700 15px/1.15 Inter,sans-serif;color:#fff;text-shadow:0 1px 4px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.a{font:800 11px Oxanium,sans-serif;letter-spacing:.16em;color:var(--acid);text-transform:uppercase}
+.lbl{position:absolute;left:24px;top:24px;font:800 28px Oxanium,sans-serif;color:#fff;text-shadow:0 2px 8px #000}
+</style></head><body>
+<div id="stage" class="gx">
+  <div class="lbl">2 · WINDOWS MEDIA PLAYER — layered waves with feedback trails</div>
+  <div class="pn slime mu">
+    <canvas id="c" width="560" height="120"></canvas>
+    <div class="ov"><img id="cv" alt=""><div><div class="t" id="tt"></div><div class="a" id="ar"></div></div></div>
+  </div>
+</div>
+<script type="module">
+import { NOW, getWave, getLevel, cover, stageFit } from './music-shared.js';
+stageFit(stage);
+cv.src = cover(68); tt.textContent = NOW.album; ar.textContent = NOW.artist;
+const g = c.getContext('2d'), W = c.width, H = c.height;
+let t = 0;
+(function draw() {
+  t += 1;
+  // WMP "Ambience" feel: previous frame zooms out and fades → swirling trails
+  g.globalAlpha = 0.88;
+  g.drawImage(c, -6, -3, W + 12, H + 6);
+  g.globalAlpha = 1;
+  g.fillStyle = 'rgba(0,8,2,.18)'; g.fillRect(0, 0, W, H);
+  const lvl = getLevel(), w = getWave(140);
+  const layers = [['#a8ff1f', 1, 0], ['#5dff9e', .7, 1.7], ['#e8ff6a', .5, 3.1]];
+  for (const [col, amp, ph] of layers) {
+    g.beginPath();
+    w.forEach((v, i) => {
+      const x = i / (w.length - 1) * W;
+      const y = H * 0.45 + (v * amp + Math.sin(i * 0.09 + t * 0.03 + ph) * 0.35 * lvl) * H * 0.38;
+      i ? g.lineTo(x, y) : g.moveTo(x, y);
+    });
+    g.strokeStyle = col; g.lineWidth = 2; g.shadowColor = col; g.shadowBlur = 10; g.stroke();
+  }
+  g.shadowBlur = 0;
+  requestAnimationFrame(draw);
+})();
+</script></body></html>

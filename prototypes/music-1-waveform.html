@@ -1,0 +1,48 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Music 1 · Waveform</title>
+<link rel="stylesheet" href="../styles/toxic.css">
+<style>
+html,body{margin:0;background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;background:url(game.webp) center/cover}
+.mu{position:absolute;left:905px;top:928px;width:560px;height:120px;display:grid;grid-template-columns:76px 1fr;gap:12px;padding:10px 14px}
+.mu img{width:76px;height:76px;border-radius:4px;margin-top:2px}
+.rt{display:grid;grid-template-rows:auto 1fr auto;min-width:0}
+.t{font:700 16px/1.2 Inter,sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t em{font-style:normal;color:var(--acid);font:800 12px Oxanium,sans-serif;letter-spacing:.14em;text-transform:uppercase;margin-left:8px}
+canvas{width:100%;height:100%;display:block}
+.tm{display:flex;justify-content:space-between;font:700 12px Oxanium,sans-serif;color:var(--mute)}
+.lbl{position:absolute;left:24px;top:24px;font:800 28px Oxanium,sans-serif;color:#fff;text-shadow:0 2px 8px #000}
+</style></head><body>
+<div id="stage" class="gx">
+  <div class="lbl">1 · WAVEFORM — scrolling mirrored waveform, the played part lit</div>
+  <div class="pn slime mu">
+    <img id="cv" alt="">
+    <div class="rt">
+      <div class="t"><span id="tt"></span><em id="ar"></em></div>
+      <canvas id="c" width="440" height="56"></canvas>
+      <div class="tm"><span id="t1"></span><span id="t2"></span></div>
+    </div>
+  </div>
+</div>
+<script type="module">
+import { NOW, getLevel, cover, fmt, stageFit } from './music-shared.js';
+stageFit(stage);
+cv.src = cover(76); tt.textContent = NOW.album; ar.textContent = NOW.artist;
+t1.textContent = fmt(NOW.duration * NOW.progress); t2.textContent = fmt(NOW.duration);
+const g = c.getContext('2d'), W = c.width, H = c.height, step = 3;
+const hist = [];
+let acc = 0;
+(function draw() {
+  if (++acc % 2 === 0) { hist.push(getLevel()); if (hist.length > W / step) hist.shift(); }
+  g.clearRect(0, 0, W, H);
+  const mid = H / 2;
+  hist.forEach((v, i) => {
+    const x = W - (hist.length - i) * step, h = Math.max(2, v * (H - 4));
+    const recent = i > hist.length - 6;
+    g.fillStyle = recent ? '#eaffc8' : `rgba(168,255,31,${0.35 + 0.65 * (i / hist.length)})`;
+    g.fillRect(x, mid - h / 2, step - 1, h);
+  });
+  g.fillStyle = 'rgba(168,255,31,.25)'; g.fillRect(0, mid, W, 1);
+  requestAnimationFrame(draw);
+})();
+</script></body></html>
