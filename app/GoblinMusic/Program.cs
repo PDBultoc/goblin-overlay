@@ -70,9 +70,7 @@ internal sealed class Tray : ApplicationContext
     {
         var l = _capture.Drain();
         if (l.Count == 0) return;
-        var sb = new StringBuilder("{\"l\":[");
-        for (var i = 0; i < l.Count; i++) sb.Append(i == 0 ? "" : ",").Append(l[i].ToString("0.###", CultureInfo.InvariantCulture));
-        _server.Broadcast(Sse.Frame("lv", sb.Append("]}").ToString()));
+        _server.Broadcast(Sse.Frame("lv", Sse.Levels(l)));
     }
 
     private int _busy;

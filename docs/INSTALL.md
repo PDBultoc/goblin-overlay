@@ -18,6 +18,7 @@
 - Announcements: type them in **messages** (one line per row)
 - Showmatch: **series** → **Use current opponent**
 - **monk** → **Start** / **Stop**
+- Spotify song + live wave in the bottom strip: install GoblinMusic once, see [MUSIC.md](MUSIC.md)
 
 ## Fix
 - Nothing shows: source **Properties** → **Refresh cache of current page**
