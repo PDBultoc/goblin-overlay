@@ -1,0 +1,67 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Probe · audio input (VB-Cable)</title>
+<style>
+body{margin:0;background:#0b0f0a;color:#e8f1e2;font:14px/1.45 system-ui,sans-serif;padding:14px}
+h3{color:#a8ff1f;margin:0 0 8px}
+button,select{font:inherit;padding:6px 10px;margin:4px 0;background:#121a10;color:#e8f1e2;border:1px solid #2a3a22;border-radius:4px}
+button{background:#a8ff1f;color:#061003;font-weight:700;border:0}
+canvas{display:block;width:100%;height:90px;background:#020602;border:1px solid #2a3a22;border-radius:4px;margin-top:8px}
+#st{margin-top:6px;font-family:Consolas,monospace;white-space:pre-wrap}
+.ok{color:#a8ff1f}.bad{color:#ff6b6b}
+</style></head><body>
+<h3>Audio probe — can this page hear the VB-Cable?</h3>
+<button id="go">1 · Start (allow microphone access)</button>
+<div><select id="dev" disabled><option>— devices appear after Start —</option></select></div>
+<canvas id="c" width="600" height="90"></canvas>
+<div id="st">Not started.</div>
+<script>
+const st = document.getElementById('st'), dev = document.getElementById('dev'), c = document.getElementById('c'), g = c.getContext('2d');
+const log = (msg, cls) => { st.innerHTML += `\n<span class="${cls || ''}">${msg}</span>`; };
+let ctx, an, src, stream, peak = 0;
+async function listDevices() {
+  const all = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput');
+  dev.innerHTML = all.map((d) => `<option value="${d.deviceId}">${d.label || '(no label)'}</option>`).join('');
+  dev.disabled = false;
+  const cable = all.find((d) => /cable output|vb-audio/i.test(d.label));
+  if (cable) { dev.value = cable.deviceId; log('Found: ' + cable.label, 'ok'); } else log('No "CABLE Output" in the list — pick the device by hand.', 'bad');
+  log('Inputs seen: ' + all.length);
+  return cable ? cable.deviceId : all[0] && all[0].deviceId;
+}
+async function open(id) {
+  if (stream) stream.getTracks().forEach((t) => t.stop());
+  stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: id ? { exact: id } : undefined, echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+  ctx = ctx || new AudioContext();
+  await ctx.resume();
+  if (src) src.disconnect();
+  src = ctx.createMediaStreamSource(stream);
+  an = ctx.createAnalyser(); an.fftSize = 2048;
+  src.connect(an);
+  log('Listening to: ' + stream.getAudioTracks()[0].label + ' — play music in Spotify now.', 'ok');
+}
+document.getElementById('go').onclick = async () => {
+  st.textContent = 'Starting…';
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { log('getUserMedia is NOT available here (navigator.mediaDevices missing).', 'bad'); return; }
+  try {
+    const first = await navigator.mediaDevices.getUserMedia({ audio: true }); // permission → device labels
+    first.getTracks().forEach((t) => t.stop());
+    log('Microphone permission: granted', 'ok');
+    await open(await listDevices());
+  } catch (e) { log('ERROR: ' + e.name + ' — ' + e.message, 'bad'); }
+};
+dev.onchange = () => open(dev.value).catch((e) => log('ERROR: ' + e.name + ' — ' + e.message, 'bad'));
+const buf = new Float32Array(2048);
+(function draw() {
+  g.fillStyle = '#020602'; g.fillRect(0, 0, c.width, c.height);
+  if (an) {
+    an.getFloatTimeDomainData(buf);
+    let rms = 0; for (const v of buf) rms += v * v; rms = Math.sqrt(rms / buf.length);
+    peak = Math.max(peak * 0.995, rms);
+    g.beginPath();
+    for (let i = 0; i < buf.length; i += 4) { const x = i / buf.length * c.width, y = c.height / 2 - buf[i] * c.height * 0.45; i ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.strokeStyle = '#a8ff1f'; g.lineWidth = 2; g.stroke();
+    g.fillStyle = '#e8f1e2'; g.font = '12px Consolas'; g.fillText('level ' + rms.toFixed(3) + '   peak ' + peak.toFixed(3), 8, 14);
+  }
+  requestAnimationFrame(draw);
+})();
+</script></body></html>
