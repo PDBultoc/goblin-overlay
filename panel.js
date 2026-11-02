@@ -6,7 +6,7 @@ import { createRemote, newRoom } from './core/remote.js';
 import { connectStreamlabs } from './core/streamlabs.js';
 import { latestRows } from './modules/latest.js';
 
-export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'messages', 'latest', 'chat', 'alerts', 'monk'];
+export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'music', 'messages', 'latest', 'chat', 'alerts', 'monk'];
 
 export function fmtMMSS(ms) {
   const s = Math.max(0, Math.ceil(ms / 1000));
@@ -191,7 +191,11 @@ function boot() {
     refreshers.push(draw); draw();
     return [
       field('Position', m('challenges', 'position'), 'select', { options: ['bottom', 'left'] }),
-      field('Rotate (sec)', m('challenges', 'rotateSec'), 'number', { attrs: { min: '2' } }),
+      field('Schedule', m('challenges', 'schedule'), 'select', { options: ['every', 'always'] }),
+      field('Every (min)', m('challenges', 'everyMin'), 'number', { attrs: { min: '1' } }),
+      field('Per tier (sec)', m('challenges', 'perTierSec'), 'number', { attrs: { min: '3' } }),
+      field('Rounds', m('challenges', 'rounds'), 'number', { attrs: { min: '1' } }),
+      field('Rotate (sec, always)', m('challenges', 'rotateSec'), 'number', { attrs: { min: '2' } }),
       list,
       el('button', { type: 'button', text: '+ Add tier', onclick: () => {
         write(m('challenges', 'tiers'), [...(getp(m('challenges', 'tiers')) || []), { amount: 5, text: 'New challenge' }]);
@@ -251,6 +255,11 @@ function boot() {
       field('Source', m('goal', 'source'), 'select', { options: ['manual', 'streamlabs'] }),
     ],
     challenges: tiersBody,
+    music: () => [
+      el('div', { class: 'note', text: 'Spotify song + live wave. Needs GoblinMusic.exe running on this PC; hidden while the challenges board shows.' }),
+      field('App URL', m('music', 'url')),
+      field('Wave delay (ms)', m('music', 'delayMs'), 'number', { attrs: { min: '0', max: '3000', step: '50' } }),
+    ],
     messages: messagesBody,
     latest: () => {
       const info = el('div', { class: 'note' });

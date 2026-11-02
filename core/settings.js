@@ -8,11 +8,14 @@ export const DEFAULTS = {
     intro: { enabled: true, seconds: 3.5 }, result: { enabled: true }, civdelay: { enabled: true, minutes: 3 },
     // alerts start off: until the Streamlabs socket (T9) is wired, Goblin's own Streamlabs alerts cover them.
     goal: { enabled: true, title: 'Goblin goal', current: 0, target: 100, source: 'manual' },
-    challenges: { enabled: true, position: 'bottom', rotateSec: 12, tiers: [
+    // schedule 'every': shown everyMin minutes (wall clock :00/:20/:40), perTierSec per tier, `rounds` times, then the music widget gets the strip.
+    challenges: { enabled: true, position: 'bottom', rotateSec: 12, schedule: 'every', everyMin: 20, perTierSec: 10, rounds: 2, tiers: [
       { amount: 5, text: 'Play one game with a random civ' },
       { amount: 10, text: 'Only scouts until Castle Age' },
       { amount: 15, text: 'Monk costume for 1 hour' },
     ] },
+    // music: needs the local GoblinMusic.exe; delayMs aligns the wave with the stream's audio.
+    music: { enabled: true, url: 'http://127.0.0.1:47800', delayMs: 0 },
     messages: { enabled: true, title: '', text: '5$ = 1v1 ranked or 1v1 vs you' },
     latest: { enabled: true },
     chat: { enabled: true, channel: 'swedishgoblin', lines: 6 },
