@@ -39,36 +39,40 @@ public class CoreTests
     }
 
     [Fact]
-    public void Meter_emits_40_frames_per_second_with_a_scope_wave()
+    public void Meter_emits_40_frames_per_second_with_three_bands()
     {
         var m = new LevelMeter(48000, 2);
         var got = new List<Frame>();
-        m.Add(Tone(100, 48000), got.Add);
+        m.Add(Tone(80, 48000), got.Add);
         Assert.Equal(40, got.Count);
-        Assert.All(got, f => Assert.Equal(Scope.Points, f.Wave.Length));
-        Assert.Equal(1, got[^1].Level, 2); // steady tone = its own peak
+        Assert.All(got, f => { Assert.Equal(3, f.Levels.Length); Assert.All(f.Waves, w => Assert.Equal(Scope.Points, w.Length)); });
+        Assert.Equal(1, got[^1].Levels[0], 2); // steady bass tone = the bass band's own peak
+    }
+
+    [Fact]
+    public void Each_band_reacts_only_to_its_own_part_of_the_sound()
+    {
+        // band RMS after the filters, for a 0.5-amplitude tone
+        double Rms(int band, double hz) => Scope.Bands()[band].Shape(Tone(hz, Scope.Block, 1), 48000).Rms;
+        Assert.True(Rms(0, 80) > 0.2 && Rms(0, 800) < 0.02 && Rms(0, 6000) < 0.001);    // bass
+        Assert.True(Rms(1, 800) > 0.2 && Rms(1, 80) < 0.05 && Rms(1, 6000) < 0.05);     // voice
+        Assert.True(Rms(2, 6000) > 0.2 && Rms(2, 800) < 0.03 && Rms(2, 80) < 0.001);    // highs
     }
 
     [Fact]
     public void Scope_stands_still_whatever_the_phase_of_the_audio()
     {
-        // Two blocks of the same 100 Hz tone, started 137 samples apart: the trigger
-        // must line them up so the drawn wave does not slide sideways.
-        var a = new Scope().Shape(Tone(100, Scope.Block, 1), 48000);
-        var b = new Scope().Shape(Tone(100, Scope.Block, 1, skip: 137), 48000);
-        Assert.True(a.Zip(b, (x, y) => Math.Abs(x - y)).Max() < 0.1);
-        Assert.InRange(Math.Abs(a[0]), 0, 0.25);              // starts at the rising zero crossing (first point = mean of 25 samples after it)
-        Assert.True(a[2] > a[0]);
-        Assert.Equal(1, a.Max(Math.Abs), 1);                  // fills the strip
-        Assert.All(new Scope().Shape(new float[Scope.Block], 48000), v => Assert.Equal(0, v)); // silence: flat
-    }
-
-    [Fact]
-    public void Scope_low_pass_keeps_bass_and_removes_treble()
-    {
-        double Amp(double hz) => Scope.LowPass(Tone(hz, 4800, 1), 48000).Skip(2400).Max(Math.Abs);
-        Assert.True(Amp(60) > 0.4);    // 0.5 in, nearly all of the bass out
-        Assert.True(Amp(5000) < 0.01); // treble ripple gone, so the line stays smooth
+        // Two blocks of the same tone, started 137 samples apart: the trigger must line them
+        // up so the drawn wave does not slide sideways. Bass at 100 Hz, voice at 700 Hz.
+        foreach (var (band, hz) in new[] { (0, 100.0), (1, 700.0) })
+        {
+            var a = Scope.Bands()[band].Shape(Tone(hz, Scope.Block, 1), 48000).Trace;
+            var b = Scope.Bands()[band].Shape(Tone(hz, Scope.Block, 1, skip: 137), 48000).Trace;
+            Assert.True(a.Zip(b, (x, y) => Math.Abs(x - y)).Max() < 0.15, $"band {band} drifts");
+            Assert.True(a[2] > a[0], $"band {band} does not start on a rising edge");
+            Assert.Equal(1, a.Max(Math.Abs), 1); // fills the strip
+        }
+        Assert.All(Scope.Bands()[0].Shape(new float[Scope.Block], 48000).Trace, v => Assert.Equal(0, v)); // silence: flat
     }
 
     [Fact]
@@ -92,8 +96,8 @@ public class CoreTests
     public void Sse_frame_and_request_line()
     {
         Assert.Equal("event: lv\ndata: {\"l\":[0.5]}\n\n", Sse.Frame("lv", "{\"l\":[0.5]}"));
-        Assert.Equal("{\"l\":[0.5,1],\"w\":[[1,-0.25],[0,0]]}",
-            Sse.Levels(new[] { new Frame(0.5, new[] { 1.0, -0.25 }), new Frame(1, new[] { 0.0, 0 }) }));
+        Assert.Equal("{\"l\":[[0.5,1,0]],\"w\":[[[1,-0.25],[0],[0.5]]]}",
+            Sse.Levels(new[] { new Frame(new[] { 0.5, 1, 0 }, new[] { new[] { 1.0, -0.25 }, new[] { 0.0 }, new[] { 0.5 } }) }));
         Assert.Equal(("GET", "/stream"), Sse.RequestLine("GET /stream?x=1 HTTP/1.1"));
         Assert.Equal(("", ""), Sse.RequestLine(""));
         var head = System.Text.Encoding.ASCII.GetString(Sse.Head(204, "No Content", null, null));

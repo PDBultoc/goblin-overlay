@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { scheduleOf, inSlot } from '../modules/challenges.js';
-import { visible, stampFrames, dueFrames, easeTrace, traceY, POINTS } from '../modules/music.js';
+import { visible, stampFrames, dueFrames, easeTrace, traceY, isBeat, POINTS, BANDS } from '../modules/music.js';
 import { DEFAULTS } from '../core/settings.js';
 
 test('challenges default schedule: 3 tiers x 10 s x 2 rounds every 20 min', () => {
@@ -33,17 +33,25 @@ test('music shows only when connected, playing and the strip is free', () => {
 
 test('a frame batch is spread back in time at 25 ms per frame, then released after the delay', () => {
   const w = Array.from({ length: POINTS }, (_, i) => Math.sin(i / 8));
-  const q = stampFrames([], [0.1, 0.2, 0.3], [w, w, w], 1000);
+  const f = (x) => [x, x / 2, 0];
+  const q = stampFrames([], [f(0.1), f(0.2), f(0.3)], [[w, w, w], [w, w, w], [w, w, w]], 1000);
   assert.deepEqual(q.map((x) => x.t), [950, 975, 1000]);
   const out = dueFrames(q, 1015, 40); // 950+40, 975+40 <= 1015; 1000+40 is not
-  assert.deepEqual(out.map((x) => x.v), [0.1, 0.2]);
-  assert.deepEqual(out[0].w, w);
-  assert.deepEqual(q.map((x) => x.v), [0.3]);
+  assert.deepEqual(out.map((x) => x.v), [f(0.1), f(0.2)]);
+  assert.deepEqual(out[0].w[1], w);
+  assert.deepEqual(q.map((x) => x.v[0]), [0.3]);
   assert.deepEqual(stampFrames([], 'junk', [], 1), []);
-  const bad = stampFrames([], [2, -1, NaN], [[5, 5]], 0);
-  assert.deepEqual(bad.map((x) => x.v), [1, 0, 0]);
-  assert.deepEqual(bad[0].w, new Array(POINTS).fill(0)); // wrong length / missing: flat line
-  assert.ok(stampFrames([], [1], [w.map(() => 9)], 0)[0].w.every((v) => v === 1)); // clamped
+  const bad = stampFrames([], [[2, -1, NaN], 0.5], [[[5, 5]]], 0); // also the old single-band format
+  assert.deepEqual(bad.map((x) => x.v), [[1, 0, 0], [0, 0, 0]]);
+  assert.equal(bad[0].w.length, BANDS);
+  assert.deepEqual(bad[0].w[0], new Array(POINTS).fill(0)); // wrong length / missing: flat line
+  assert.ok(stampFrames([], [[1, 1, 1]], [[w.map(() => 9)]], 0)[0].w[0].every((v) => v === 1)); // clamped
+});
+
+test('a beat is a jump of the bass level, not a high steady level', () => {
+  assert.equal(isBeat(0.2, 0.7), true);
+  assert.equal(isBeat(0.9, 1), false);
+  assert.equal(isBeat(0.7, 0.2), false);
 });
 
 test('easeTrace closes half the gap per frame and settles on the target', () => {
@@ -54,9 +62,9 @@ test('easeTrace closes half the gap per frame and settles on the target', () => 
   assert.deepEqual(easeTrace([1], []), [0.5]); // no data: drifts back to flat
 });
 
-test('traceY: centred, quiet passages calmer than loud ones', () => {
+test('traceY: centred, a quiet band lies almost flat', () => {
   assert.deepEqual(traceY([0, 1, -1], 1, 50, 40), [50, 90, 10]);
-  assert.deepEqual(traceY([1], 0, 50, 40), [72]); // 55% swing at silence-level loudness
+  assert.deepEqual(traceY([1], 0, 50, 40), [56]); // 15% swing when the band is silent
 });
 
 test('music defaults point at the local app', () => {
