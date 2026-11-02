@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Probe · local app link</title>
+<style>
+body{margin:0;background:#0b0f0a;color:#e8f1e2;font:28px/1.4 system-ui,sans-serif;padding:20px}
+.ok{color:#a8ff1f}.bad{color:#ff6b6b}
+#bar{height:40px;background:#a8ff1f;width:0;margin-top:14px;box-shadow:0 0 12px #a8ff1f}
+</style></head><body>
+<div>Local app link (127.0.0.1:47800)</div>
+<div id="st">connecting…</div>
+<div id="rate"></div>
+<div id="bar"></div>
+<script>
+const st = document.getElementById('st'), rate = document.getElementById('rate'), bar = document.getElementById('bar');
+let n = 0, last = 0;
+try {
+  const es = new EventSource('http://127.0.0.1:47800/stream');
+  es.onopen = () => { st.textContent = 'CONNECTED'; st.className = 'ok'; };
+  es.onerror = () => { st.textContent = 'ERROR — cannot reach the local app (is it running?)'; st.className = 'bad'; };
+  es.onmessage = (e) => { const d = JSON.parse(e.data); n++; bar.style.width = (d.l * 100) + '%'; };
+} catch (e) { st.textContent = 'ERROR ' + e.name + ': ' + e.message; st.className = 'bad'; }
+setInterval(() => { rate.textContent = (n - last) + ' messages/second'; last = n; }, 1000);
+</script></body></html>
