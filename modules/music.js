@@ -12,6 +12,11 @@
 const CSS = `
 [data-mod=music] .mu{position:absolute;left:905px;top:928px;width:560px;height:120px;box-sizing:border-box;padding:0;
   transition:opacity .5s,transform .5s}
+/* background: see-through at the sides, easing to full black in the middle (Paul); the bottom
+   slime line fades the same way. The canvas itself stays transparent apart from the waves. */
+[data-mod=music] .mu{background:linear-gradient(90deg,transparent,rgba(0,4,1,.55) 14%,rgba(0,4,1,.96) 38%,rgba(0,4,1,.96) 62%,rgba(0,4,1,.55) 86%,transparent);
+  backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;border:0;border-bottom:2px solid;
+  border-image:linear-gradient(90deg,transparent,var(--acid) 18%,var(--acid) 82%,transparent) 1}
 /* the theme's highlighted corners and top glow (.pn::before/::after) sit 1px outside the box:
    no overflow clipping, and drawn above the canvas */
 [data-mod=music] .mu::before,[data-mod=music] .mu::after{z-index:2}
@@ -29,7 +34,8 @@ const CSS = `
     linear-gradient(var(--acid),var(--acid)) right bottom/2px 16px no-repeat}
 [data-mod=music] .mu.off{opacity:0;transform:translateY(14px)}
 [data-mod=music] .mu canvas{position:absolute;inset:0;width:100%;height:100%}
-[data-mod=music] .ov{position:absolute;left:14px;right:14px;bottom:8px;display:flex;align-items:flex-end;gap:10px;min-width:0}
+/* cover + song + artist centred (Paul): it sits on the black middle, the see-through sides stay clear */
+[data-mod=music] .ov{position:absolute;left:14px;right:14px;bottom:8px;display:flex;align-items:center;justify-content:center;gap:10px;min-width:0;text-align:center}
 [data-mod=music] .ov img{width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none;box-shadow:0 0 0 1px rgba(168,255,31,.5)}
 [data-mod=music] .ov>div{min-width:0}
 [data-mod=music] .t{font:700 15px/1.15 Inter,sans-serif;color:#fff;text-shadow:0 1px 4px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -172,7 +178,10 @@ export function mount(root, ctx = {}) {
     pulse *= 0.88;
     if (!shown()) return;
     // Short glow trails, no motion of their own: the picture moves only with the audio.
-    g.fillStyle = 'rgba(0,8,2,.42)'; g.fillRect(0, 0, W, H);
+    // fade the previous frame out (transparent, not black: the box's gradient is the background)
+    g.globalCompositeOperation = 'destination-out';
+    g.fillStyle = 'rgba(0,0,0,.42)'; g.fillRect(0, 0, W, H);
+    g.globalCompositeOperation = 'source-over';
     for (const [b, col, width, swing, , centre] of LAYERS) {
       const w = trace[b];
       const beat = b === 0 ? pulse : 0;
