@@ -92,14 +92,16 @@ const CSS = `
 .sr.pa{position:absolute;left:720px;width:480px;height:auto;display:block;padding:6px 16px 7px;box-sizing:border-box}
 .sr .r1{display:flex;align-items:center;justify-content:center;gap:16px;height:32px}
 .sr .n{white-space:nowrap}
-.sr.pa .o{max-width:none}
+/* opponent in the music strip's aqua (Paul): clearly apart from Goblin's green, white stays for numbers */
+.sr.pa{--opp:#38f2d0}
+.sr.pa .o{max-width:none;color:var(--opp);text-shadow:0 0 10px rgba(56,242,208,.45)}
 .sr .pa-t{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:11px;letter-spacing:.16em;color:var(--mute);white-space:nowrap}
 .sr .pa-t em{font-style:normal;font-size:14px;color:var(--text);font-variant-numeric:tabular-nums}
 .sr .dots{display:flex;gap:1px;height:7px;margin-top:5px} /* not .hd: that is the theme's panel header */
 .sr .dots b{flex:1;background:rgba(255,255,255,.12)}
 .sr .dots b:nth-child(10n):not(:last-child){margin-right:3px}
 .sr .dots b.m{background:var(--acid);box-shadow:0 0 5px var(--a60)}
-.sr .dots b.o{background:#cfd8c9}
+.sr .dots b.o{background:var(--opp);box-shadow:0 0 5px rgba(56,242,208,.5)}
 .sr .last{margin-top:5px;font:700 11px/1 Oxanium,sans-serif;letter-spacing:.14em;color:var(--mute);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sr .last b{color:var(--text);font-weight:800}
 @keyframes srIn{from{transform:translateY(-40px) scaleY(1.4);opacity:0}to{transform:none;opacity:1}}
