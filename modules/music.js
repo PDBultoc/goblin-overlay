@@ -10,7 +10,7 @@
 // and he asked for one line per part). The lines stand still and move only with the audio.
 // Shares the bottom strip with the challenges board: hidden while that holds it (bus `strip`).
 const CSS = `
-[data-mod=music] .mu{position:absolute;left:905px;top:928px;width:560px;height:120px;box-sizing:border-box;padding:0;
+[data-mod=music] .mu{position:absolute;left:935px;top:914px;width:560px;height:120px;box-sizing:border-box;padding:0;
   transition:opacity .5s,transform .5s}
 /* background: see-through at the sides, easing to full black in the middle (Paul); the bottom
    slime line fades the same way. The canvas itself stays transparent apart from the waves. */

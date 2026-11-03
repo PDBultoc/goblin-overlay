@@ -12,7 +12,7 @@ const CSS = `
 [data-mod=challenges] .unl.out{animation:unlOut .4s ease-in forwards}
 /* bottom strip: between Goblin's left HUD box and the minimap, where his own goal bar sits today (Paul, 2026-10-31) */
 /* x 900–1500: right of the game's selection panel, left of the minimap (Goblin's live HUD, 2026-10-31) */
-[data-mod=challenges] .ch.bottom{left:905px;top:928px;width:560px;height:120px}
+[data-mod=challenges] .ch.bottom{left:935px;top:914px;width:560px;height:120px}
 [data-mod=challenges] .ch.bottom .hd,[data-mod=challenges] .ch.bottom .tabs{width:240px}
 [data-mod=challenges] .ch.bottom .hd .t{white-space:nowrap;letter-spacing:.06em;font-size:14px}
 [data-mod=challenges] .ch.bottom .ct{left:258px;right:12px;top:18px;bottom:10px}

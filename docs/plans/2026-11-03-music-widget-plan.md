@@ -12,7 +12,7 @@
 
 ## Global constraints
 - Port 47800, bind 127.0.0.1 only. Headers on every response: `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Private-Network: true`, `Access-Control-Allow-Headers: *`; OPTIONS → 204.
-- Strip geometry: left 905 top 928, 560×120 (same as challenges bottom strip).
+- Strip geometry: left 935 top 914 (moved 2026-11-03 to sit centred in the HUD gap), 560×120 (same as challenges bottom strip).
 - Module CSS scoped under `[data-mod=music]`. Node tests never use the real BroadcastChannel / EventSource.
 - Every code push bumps `version.json` `v`.
 - Exe is never committed (`app/**/bin`, `app/**/obj` ignored); it ships as a GitHub Release asset (D2, needs Paul's yes).
