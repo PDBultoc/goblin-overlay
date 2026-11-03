@@ -4,7 +4,8 @@ export const DEFAULTS = {
   modules: {
     cam: { enabled: true, name: 'SwedishGoblin' },
     matchbar: { enabled: true },
-    series: { enabled: true, bestOf: 3, opponentId: null, since: null, manual: { me: 0, opp: 0 } },
+    // mode 'playall' (PA100): score = full head-to-head since `since` out of `total`; manual = correction.
+    series: { enabled: true, mode: 'bestof', bestOf: 3, total: 100, opponentId: null, since: null, manual: { me: 0, opp: 0 } },
     intro: { enabled: true, seconds: 3.5 }, result: { enabled: true }, civdelay: { enabled: true, minutes: 3 },
     // alerts start off: until the Streamlabs socket (T9) is wired, Goblin's own Streamlabs alerts cover them.
     goal: { enabled: true, title: 'Goblin goal', current: 0, target: 100, source: 'manual' },

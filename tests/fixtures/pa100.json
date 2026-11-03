@@ -1,0 +1,170 @@
+[
+ {
+  "matchId": 489422697,
+  "started": "2026-07-01T19:38:44.000Z",
+  "finished": "2026-07-01T20:10:42.000Z",
+  "leaderboardId": "unranked",
+  "name": "PD vs Goblin",
+  "mapName": "Arabia",
+  "teams": [
+   {
+    "players": [
+     {
+      "profileId": 20186100,
+      "name": "SwedishGoblinTwitch",
+      "civName": "Portuguese",
+      "won": false
+     }
+    ]
+   },
+   {
+    "players": [
+     {
+      "profileId": 551021,
+      "name": "PDBull",
+      "civName": "Koreans",
+      "won": true
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "matchId": 498826033,
+  "started": "2026-08-11T20:47:47.000Z",
+  "finished": null,
+  "leaderboardId": "rm_team",
+  "name": "AUTOMATCH",
+  "mapName": "Arena",
+  "teams": [
+   {
+    "players": [
+     {
+      "profileId": 20186100,
+      "name": "SwedishGoblinTwitch",
+      "civName": "Khitans",
+      "won": null
+     },
+     {
+      "profileId": 551021,
+      "name": "PDBull",
+      "civName": "Jurchens",
+      "won": null
+     }
+    ]
+   },
+   {
+    "players": [
+     {
+      "profileId": 4737522,
+      "name": "TIRA-ONDA",
+      "civName": "Georgians",
+      "won": null
+     },
+     {
+      "profileId": 22833976,
+      "name": "Littlebread",
+      "civName": "Mapuche",
+      "won": null
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "matchId": 504812222,
+  "started": "2026-09-06T18:10:56.000Z",
+  "finished": "2026-09-06T18:41:10.000Z",
+  "leaderboardId": "rm_team",
+  "name": "AUTOMATCH",
+  "mapName": "Arena",
+  "teams": [
+   {
+    "players": [
+     {
+      "profileId": 1577729,
+      "name": "\u272a rockhound \u30c4",
+      "civName": "Wu",
+      "won": false
+     },
+     {
+      "profileId": 7569939,
+      "name": "PsyBorg",
+      "civName": "Bulgarians",
+      "won": false
+     },
+     {
+      "profileId": 10281521,
+      "name": "Adi",
+      "civName": "Byzantines",
+      "won": false
+     }
+    ]
+   },
+   {
+    "players": [
+     {
+      "profileId": 551021,
+      "name": "PDBull",
+      "civName": "Hindustanis",
+      "won": true
+     },
+     {
+      "profileId": 20186100,
+      "name": "SwedishGoblinTwitch",
+      "civName": "Burmese",
+      "won": true
+     },
+     {
+      "profileId": 10440776,
+      "name": "PolishedPro",
+      "civName": "Burgundians",
+      "won": true
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "matchId": 508041349,
+  "started": "2026-09-20T18:11:11.000Z",
+  "finished": "2026-09-20T18:37:50.000Z",
+  "leaderboardId": "rm_team",
+  "name": "AUTOMATCH",
+  "mapName": "Arabia",
+  "teams": [
+   {
+    "players": [
+     {
+      "profileId": 1082604,
+      "name": "Lishen",
+      "civName": "Maya",
+      "won": true
+     },
+     {
+      "profileId": 1887929,
+      "name": "Odesseiron",
+      "civName": "Magyars",
+      "won": true
+     }
+    ]
+   },
+   {
+    "players": [
+     {
+      "profileId": 551021,
+      "name": "PDBull",
+      "civName": "Saracens",
+      "won": false
+     },
+     {
+      "profileId": 20186100,
+      "name": "SwedishGoblinTwitch",
+      "civName": "Maya",
+      "won": false
+     }
+    ]
+   }
+  ]
+ }
+]

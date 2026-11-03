@@ -5,6 +5,7 @@ import { startAutoUpdate } from './core/autoupdate.js';
 import { createRemote, newRoom } from './core/remote.js';
 import { connectStreamlabs } from './core/streamlabs.js';
 import { latestRows } from './modules/latest.js';
+import { PA100 } from './modules/series.js';
 
 export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'music', 'messages', 'latest', 'chat', 'alerts', 'monk'];
 
@@ -148,7 +149,9 @@ function boot() {
       const v = el('b');
       const show = () => { v.textContent = String(getp(m('series', 'manual') + '.' + key) ?? 0); };
       const step = (d) => () => {
-        write(m('series', 'manual') + '.' + key, Math.max(0, (getp(m('series', 'manual') + '.' + key) ?? 0) + d));
+        // play-all: the history gives the score, these are corrections and may go negative
+        const next = (getp(m('series', 'manual') + '.' + key) ?? 0) + d;
+        write(m('series', 'manual') + '.' + key, getp(m('series', 'mode')) === 'playall' ? next : Math.max(0, next));
         show();
       };
       refreshers.push(show); show();
@@ -156,8 +159,26 @@ function boot() {
         el('div', { class: 'score' }, [el('button', { type: 'button', text: '-', 'aria-label': label + ' minus', onclick: step(-1) }), v,
           el('button', { type: 'button', text: '+', 'aria-label': label + ' plus', onclick: step(1) })])]);
     };
+    const pa100Btn = el('button', { type: 'button', class: 'pri', text: 'PA100 vs PD', onclick: () => {
+      // Play All 100 vs PDBull: score read from the whole head-to-head since 2026-09-21
+      for (const [k, v] of Object.entries(PA100)) write(m('series', k), v);
+      write(m('series', 'manual'), { me: 0, opp: 0 });
+      opponentName = 'PDBull';
+      refreshers.forEach((f) => f());
+    } });
+    const modeNote = el('div', { class: 'note' });
+    const showMode = () => {
+      modeNote.textContent = getp(m('series', 'mode')) === 'playall'
+        ? 'Play all: the score comes from every 1v1 since the start date. Me / Opponent below are corrections (+/-) for games the API missed.'
+        : '';
+    };
+    refreshers.push(showMode); showMode();
     return [
+      el('div', { class: 'row' }, [pa100Btn]),
+      field('Mode', m('series', 'mode'), 'select', { options: ['bestof', 'playall'] }),
       field('Best of', m('series', 'bestOf'), 'select', { options: [1, 3, 5, 7], numeric: true }),
+      field('Total (play all)', m('series', 'total'), 'number', { attrs: { min: '1' } }),
+      modeNote,
       oppLine, seen, el('div', { class: 'row' }, [useBtn]),
       scoreRow('Me', 'me'), scoreRow('Opponent', 'opp'),
       el('div', { class: 'row' }, [el('button', { type: 'button', class: 'dng', text: 'Reset', onclick: () => {
