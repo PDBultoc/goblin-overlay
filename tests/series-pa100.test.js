@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { playAllScore, fetchHistory, historyUrl, countMatch, dots, PA100 } from '../modules/series.js';
+import { playAllScore, fetchHistory, historyUrl, countMatch, dots, autoPreset, PA100 } from '../modules/series.js';
 import { DEFAULTS } from '../core/settings.js';
 
 // real API matches, trimmed (2026-09-21, copied from aoe2/pa100/fixture.json):
@@ -66,6 +66,15 @@ test('in play-all mode a finished game is not added to the correction (the histo
   const match = { id: 9, mode: '1v1', won: true, enemies: [[{ profileId: PD, name: 'PDBull' }]] };
   assert.equal(countMatch({ ...PA100, manual: { me: 0, opp: 0 } }, match), null);
   assert.deepEqual(countMatch({ mode: 'bestof', opponentId: PD }, match).manual, { me: 1, opp: 0 });
+});
+
+test('a 1v1 against PDBull switches the series to PA100 by itself, once', () => {
+  const vsPD = { id: 5, mode: '1v1', running: true, enemies: [[{ profileId: PD, name: 'PDBull' }]] };
+  assert.deepEqual(autoPreset({ mode: 'bestof', opponentId: null }, vsPD), PA100);
+  assert.equal(autoPreset({ ...PA100 }, vsPD), null);                                   // already on
+  assert.equal(autoPreset({ mode: 'bestof' }, { ...vsPD, enemies: [[{ profileId: 42 }]] }), null); // other opponent
+  assert.equal(autoPreset({ mode: 'bestof' }, { ...vsPD, mode: '2v2' }), null);         // team game
+  assert.equal(autoPreset({ mode: 'bestof' }, null), null);
 });
 
 test('PA100 preset and defaults', () => {

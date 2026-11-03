@@ -19,6 +19,15 @@ export function countMatch(cfg, match) {
 // PA100 preset (aoe2 wiki pa100.md: PDBull 551021, series started 2026-09-21 at 0-0).
 export const PA100 = { mode: 'playall', opponentId: 551021, since: '2026-09-21T00:00:00Z', total: 100 };
 
+// Pure: a 1v1 against PDBull turns PA100 on by itself (Paul, 2026-11-03: Goblin should not have
+// to press anything). Returns the preset to apply, or null.
+export function autoPreset(cfg, match) {
+  if (!cfg || cfg.mode === 'playall' && cfg.opponentId === PA100.opponentId) return null;
+  if (!match || match.mode !== '1v1') return null;
+  const e = match.enemies && match.enemies[0] && match.enemies[0][0];
+  return e && e.profileId === PA100.opponentId ? { ...PA100 } : null;
+}
+
 const API = 'https://data.aoe2companion.com/api/matches';
 export const historyUrl = (me, opp, page) => `${API}?profile_ids=${me}&with_profile_ids=${opp}&per_page=50&page=${page}`;
 
@@ -186,6 +195,14 @@ export function mount(root, ctx) {
 
   const learn = (m) => {
     if (!m) return;
+    const preset = autoPreset(cfg(), m);
+    if (preset) {
+      // remounts this module with PA100 on; the panel and the room get the new settings too
+      for (const [k, v] of Object.entries(preset)) settings.set('modules.series.' + k, v);
+      settings.set('modules.series.manual', { me: 0, opp: 0 });
+      bus.emit('settings', settings.get());
+      return;
+    }
     const id = cfg().opponentId;
     const e = m.mode === '1v1' && m.enemies && m.enemies[0] && m.enemies[0][0];
     if (id != null && e && e.profileId === id) { oppName = e.name; render(); }
