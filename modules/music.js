@@ -15,6 +15,18 @@ const CSS = `
 /* the theme's highlighted corners and top glow (.pn::before/::after) sit 1px outside the box:
    no overflow clipping, and drawn above the canvas */
 [data-mod=music] .mu::before,[data-mod=music] .mu::after{z-index:2}
+/* the theme's 1px bottom corners vanish into the slime border on this all-black strip (Paul saw
+   them "underneath" on Goblin's stream): bolder brackets on all four corners, above the waves */
+[data-mod=music] .mu::after{inset:-2px;opacity:1;filter:drop-shadow(0 0 4px var(--a60));
+  background:
+    linear-gradient(var(--acid),var(--acid)) left top/16px 2px no-repeat,
+    linear-gradient(var(--acid),var(--acid)) left top/2px 16px no-repeat,
+    linear-gradient(var(--acid),var(--acid)) right top/16px 2px no-repeat,
+    linear-gradient(var(--acid),var(--acid)) right top/2px 16px no-repeat,
+    linear-gradient(var(--acid),var(--acid)) left bottom/16px 2px no-repeat,
+    linear-gradient(var(--acid),var(--acid)) left bottom/2px 16px no-repeat,
+    linear-gradient(var(--acid),var(--acid)) right bottom/16px 2px no-repeat,
+    linear-gradient(var(--acid),var(--acid)) right bottom/2px 16px no-repeat}
 [data-mod=music] .mu.off{opacity:0;transform:translateY(14px)}
 [data-mod=music] .mu canvas{position:absolute;inset:0;width:100%;height:100%}
 [data-mod=music] .ov{position:absolute;left:14px;right:14px;bottom:8px;display:flex;align-items:flex-end;gap:10px;min-width:0}
