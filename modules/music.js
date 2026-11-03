@@ -10,8 +10,11 @@
 // and he asked for one line per part). The lines stand still and move only with the audio.
 // Shares the bottom strip with the challenges board: hidden while that holds it (bus `strip`).
 const CSS = `
-[data-mod=music] .mu{position:absolute;left:905px;top:928px;width:560px;height:120px;box-sizing:border-box;overflow:hidden;padding:0;
+[data-mod=music] .mu{position:absolute;left:905px;top:928px;width:560px;height:120px;box-sizing:border-box;padding:0;
   transition:opacity .5s,transform .5s}
+/* the theme's highlighted corners and top glow (.pn::before/::after) sit 1px outside the box:
+   no overflow clipping, and drawn above the canvas */
+[data-mod=music] .mu::before,[data-mod=music] .mu::after{z-index:2}
 [data-mod=music] .mu.off{opacity:0;transform:translateY(14px)}
 [data-mod=music] .mu canvas{position:absolute;inset:0;width:100%;height:100%}
 [data-mod=music] .ov{position:absolute;left:14px;right:14px;bottom:8px;display:flex;align-items:flex-end;gap:10px;min-width:0}
