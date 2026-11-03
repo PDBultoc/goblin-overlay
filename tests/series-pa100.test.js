@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { playAllScore, fetchHistory, historyUrl, countMatch, PA100 } from '../modules/series.js';
+import { playAllScore, fetchHistory, historyUrl, countMatch, dots, PA100 } from '../modules/series.js';
 import { DEFAULTS } from '../core/settings.js';
 
 // real API matches, trimmed (2026-09-21, copied from aoe2/pa100/fixture.json):
@@ -18,15 +18,26 @@ const oneVsOne = (id, started, goblinWon) => ({
 });
 
 test('counts only decided 1v1s between the two since the start date; team games ignored', () => {
-  assert.deepEqual(playAllScore(fx, G, PD, '2026-06-30T00:00:00Z'), { me: 0, opp: 1, oppName: 'PDBull' });
-  assert.deepEqual(playAllScore(fx, G, PD, '2026-09-21T00:00:00Z'), { me: 0, opp: 0, oppName: 'PDBull' });
+  const s = playAllScore(fx, G, PD, '2026-06-30T00:00:00Z');
+  assert.deepEqual({ me: s.me, opp: s.opp, oppName: s.oppName, seq: s.seq }, { me: 0, opp: 1, oppName: 'PDBull', seq: 'o' });
+  assert.equal(s.last.map, 'Arabia');
+  const none = playAllScore(fx, G, PD, '2026-09-21T00:00:00Z');
+  assert.deepEqual([none.me, none.opp, none.seq, none.last], [0, 0, '', null]);
 });
 
-test('page overlaps count once; unfinished games do not count', () => {
+test('page overlaps count once; unfinished games do not count; games in play order', () => {
   const a = oneVsOne(1, '2026-09-21T09:00:00Z', true), b = oneVsOne(2, '2026-09-21T10:00:00Z', false);
   const running = oneVsOne(3, '2026-09-21T11:00:00Z', null);
-  assert.deepEqual(playAllScore([a, b, a, running, { junk: 1 }], G, PD, PA100.since), { me: 1, opp: 1, oppName: 'PDBull' });
-  assert.deepEqual(playAllScore('nope', G, PD, PA100.since), { me: 0, opp: 0, oppName: '' });
+  const s = playAllScore([b, a, b, running, { junk: 1 }], G, PD, PA100.since); // API pages are newest first
+  assert.deepEqual([s.me, s.opp, s.seq], [1, 1, 'mo']);
+  assert.deepEqual(playAllScore('nope', G, PD, PA100.since), { me: 0, opp: 0, oppName: '', seq: '', last: null });
+});
+
+test('the hundred: one dot per game in play order, corrections lead, negatives drop the oldest', () => {
+  assert.deepEqual(dots('mo', {}, 5), ['m', 'o', '', '', '']);
+  assert.deepEqual(dots('mo', { me: 2, opp: 0 }, 5), ['m', 'm', 'm', 'o', '']);
+  assert.deepEqual(dots('ooom', { opp: -1 }, 5), ['o', 'o', 'm', '', '']);
+  assert.equal(dots('m'.repeat(120), {}, 100).length, 100);
 });
 
 test('history is read page by page until a short page or a page older than the start', async () => {

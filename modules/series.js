@@ -24,10 +24,11 @@ export const historyUrl = (me, opp, page) => `${API}?profile_ids=${me}&with_prof
 
 // Pure: decided 1v1s between me and opp since sinceIso, each match once (pages overlap).
 // Raw aoe2companion match objects; anything malformed is skipped.
+// seq = winners oldest first ('m' me, 'o' opponent); last = the newest decided game.
 export function playAllScore(raw, me, opp, sinceIso) {
-  const out = { me: 0, opp: 0, oppName: '' };
+  const out = { me: 0, opp: 0, oppName: '', seq: '', last: null };
   if (!Array.isArray(raw)) return out;
-  const since = Date.parse(sinceIso) || -Infinity, seen = new Set();
+  const since = Date.parse(sinceIso) || -Infinity, seen = new Set(), games = [];
   for (const m of raw) {
     if (!m || !Array.isArray(m.teams) || seen.has(m.matchId)) continue;
     seen.add(m.matchId);
@@ -36,9 +37,28 @@ export function playAllScore(raw, me, opp, sinceIso) {
     if (b && b.name) out.oppName = b.name;
     if (players.length !== 2 || !a || !b || Date.parse(m.started) < since) continue;
     if (a.won === b.won || (a.won !== true && b.won !== true)) continue; // running or undecided
-    if (a.won) out.me++; else out.opp++;
+    games.push({ t: Date.parse(m.started), w: a.won ? 'm' : 'o', civMe: a.civName || '', civOpp: b.civName || '', map: m.mapName || '' });
   }
+  games.sort((x, y) => x.t - y.t);
+  out.me = games.filter((g) => g.w === 'm').length;
+  out.opp = games.length - out.me;
+  out.seq = games.map((g) => g.w).join('');
+  const l = games[games.length - 1];
+  out.last = l ? { civMe: l.civMe, civOpp: l.civOpp, map: l.map } : null;
   return out;
+}
+
+// Pure: the strip of `total` dots, oldest game first ('m' | 'o' | '' unplayed). Corrections have
+// no play order, so they lead the strip (as on Paul's PA100 overlay); a negative correction
+// removes that many of the opponent's / my oldest recorded games.
+export function dots(seq, manual = {}, total = 100) {
+  const cm = Number(manual.me) || 0, co = Number(manual.opp) || 0;
+  let rec = String(seq || '').split('');
+  for (const [w, n] of [['m', cm], ['o', co]]) {
+    for (let k = n; k < 0; k++) { const i = rec.indexOf(w); if (i >= 0) rec.splice(i, 1); }
+  }
+  const all = [...Array(Math.max(cm, 0)).fill('m'), ...Array(Math.max(co, 0)).fill('o'), ...rec];
+  return Array.from({ length: total }, (_, i) => all[i] || '');
 }
 
 // All head-to-head pages back to the start date. Throws on a non-JSON answer (the API's
@@ -68,12 +88,20 @@ const CSS = `
 .sr .pp b{width:10px;height:10px;transform:rotate(45deg);border:1px solid var(--a60);background:transparent}
 .sr .pp b.m{background:var(--acid);box-shadow:0 0 8px var(--a60)}
 .sr .pp b.e{background:#cfd8c9;border-color:#cfd8c9}
-.sr.pa{position:absolute;overflow:hidden;left:720px;width:480px;gap:16px} /* same centre (x 960), room for "Play all 100" */
+/* PA100: same centre (x 960); score row, the hundred (one dot per game, winner's colour), last game */
+.sr.pa{position:absolute;left:720px;width:480px;height:auto;display:block;padding:6px 16px 7px;box-sizing:border-box}
+.sr .r1{display:flex;align-items:center;justify-content:center;gap:16px;height:32px}
 .sr .n{white-space:nowrap}
 .sr.pa .o{max-width:none}
 .sr .pa-t{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:11px;letter-spacing:.16em;color:var(--mute);white-space:nowrap}
 .sr .pa-t em{font-style:normal;font-size:14px;color:var(--text);font-variant-numeric:tabular-nums}
-.sr .bar{position:absolute;left:0;bottom:0;height:3px;width:var(--p,0%);background:var(--acid);box-shadow:0 0 8px var(--a60);transition:width .6s}
+.sr .dots{display:flex;gap:1px;height:7px;margin-top:5px} /* not .hd: that is the theme's panel header */
+.sr .dots b{flex:1;background:rgba(255,255,255,.12)}
+.sr .dots b:nth-child(10n):not(:last-child){margin-right:3px}
+.sr .dots b.m{background:var(--acid);box-shadow:0 0 5px var(--a60)}
+.sr .dots b.o{background:#cfd8c9}
+.sr .last{margin-top:5px;font:700 11px/1 Oxanium,sans-serif;letter-spacing:.14em;color:var(--mute);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr .last b{color:var(--text);font-weight:800}
 @keyframes srIn{from{transform:translateY(-40px) scaleY(1.4);opacity:0}to{transform:none;opacity:1}}
 `;
 
@@ -112,10 +140,14 @@ export function mount(root, ctx) {
       const ok = hist && hist.key === key(c);
       const a = (ok ? hist.me : 0) + sc.me, b = (ok ? hist.opp : 0) + sc.opp, total = Number(c.total) || 100;
       const name = (ok && hist.oppName) || oppName;
+      const known = ok || sc.me || sc.opp;
+      const strip = dots(ok ? hist.seq : '', sc, total).map((w) => `<b class="${w}"></b>`).join('');
+      const l = ok && hist.last;
       el.className = 'pn sr pa';
-      el.style.setProperty('--p', Math.min(100, ((a + b) / total) * 100) + '%');
-      el.innerHTML = `<span class="g">Goblin</span><span class="n">${ok || sc.me || sc.opp ? a : '…'}<i>&ndash;</i>${ok || sc.me || sc.opp ? b : '…'}</span>` +
-        `<span class="o">${esc(name)}</span><span class="pa-t">Play all ${total}<em>${a + b}/${total}</em></span><span class="bar"></span>`;
+      el.innerHTML = `<div class="r1"><span class="g">Goblin</span><span class="n">${known ? a : '…'}<i>&ndash;</i>${known ? b : '…'}</span>` +
+        `<span class="o">${esc(name)}</span><span class="pa-t">Play all ${total}<em>${a + b}/${total}</em></span></div>` +
+        `<div class="dots">${strip}</div>` +
+        (l ? `<div class="last">Last · <b>${esc(l.civMe)}</b> vs <b>${esc(l.civOpp)}</b> · ${esc(l.map)}</div>` : '');
       return;
     }
     el.className = 'pn sr';
@@ -135,7 +167,7 @@ export function mount(root, ctx) {
     clearTimeout(timer);
     const c = cfg();
     if (dead || c.mode !== 'playall' || c.opponentId == null) return;
-    if (!force && hist && hist.key === key(c) && Date.now() - (hist.at || 0) < 120000) return;
+    if (!force && hist && hist.key === key(c) && typeof hist.seq === 'string' && Date.now() - (hist.at || 0) < 120000) return;
     try {
       const raw = await fetchHistory(fetchFn, me(), c.opponentId, c.since);
       if (dead) return;
