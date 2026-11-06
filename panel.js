@@ -7,7 +7,7 @@ import { connectStreamlabs } from './core/streamlabs.js';
 import { latestRows } from './modules/latest.js';
 import { PA100 } from './modules/series.js';
 
-export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'music', 'messages', 'latest', 'chat', 'alerts', 'monk'];
+export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'music', 'messages', 'latest', 'chat', 'alerts', 'duelsLink', 'monk'];
 
 export function fmtMMSS(ms) {
   const s = Math.max(0, Math.ceil(ms / 1000));
@@ -280,6 +280,10 @@ function boot() {
       el('div', { class: 'note', text: 'Spotify song + live wave. Needs GoblinMusic.exe running on this PC; hidden while the challenges board shows.' }),
       field('App URL', m('music', 'url')),
       field('Wave delay (ms)', m('music', 'delayMs'), 'number', { attrs: { min: '0', max: '3000', step: '50' } }),
+    ],
+    duelsLink: () => [
+      el('div', { class: 'note', text: 'Hides the music and the challenges board while the Goblin Duels overlay shows its duel band, leaderboard, how-to or raid. Empty = off.' }),
+      field('Goblin Duels room (from PDBull)', m('duelsLink', 'room')),
     ],
     messages: messagesBody,
     latest: () => {

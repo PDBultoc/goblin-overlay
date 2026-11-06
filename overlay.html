@@ -36,7 +36,7 @@ async function mountMod(name, cfg) {
   const entry = { layer, handle: null, cfgJson: stableJson(cfg) };
   live.set(name, entry);
   try {
-    const mod = await import('./modules/' + name + '.js');
+    const mod = await import('./modules/' + name.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase()) + '.js');
     if (live.get(name) !== entry) return; // unmounted while loading
     entry.handle = mod.mount(layer, { settings, bus, cfg }) || null;
   } catch (e) {

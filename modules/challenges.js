@@ -50,6 +50,9 @@ export function scheduleOf(cfg = {}, nTiers = 0) {
 // Pure: is the board in its visible slot at `now`? Slots start at `start`, then every everyMs.
 export const inSlot = (now, start, s) => !s.every || ((now - start) % s.everyMs + s.everyMs) % s.everyMs < s.slotMs;
 
+// Pure: does another overlay (Goblin Duels) hold the strip? Then the board hides.
+export const yieldsTo = (owners) => Boolean(owners && owners.duels);
+
 function injectCss(name, css) {
   if (document.head.querySelector(`style[data-mod="${name}"]`)) return;
   const s = document.createElement('style');
@@ -115,12 +118,19 @@ export function mount(root, ctx = {}) {
   // Scheduled mode: slots anchored to the wall clock (:00/:20/:40 by default), so a
   // reload or settings change never restarts the cycle. Outside a slot the board hides
   // and gives the bottom strip to the music widget (bus 'strip').
-  let inView = !sched.every, stamping = false, shown = null, tick = 0;
-  const emitStrip = () => { if (ctx.bus) ctx.bus.emit('strip', { owner: 'challenges', busy: Boolean(shown) }); };
+  let inView = !sched.every, stamping = false, shown = null, tick = 0, owners = {};
+  // `shown` = the board's own schedule state; it is only visible when duels do not hold the strip.
+  const effective = () => Boolean(shown) && !yieldsTo(owners);
+  const emitStrip = () => { if (ctx.bus) ctx.bus.emit('strip', { owner: 'challenges', busy: effective() }); };
   function setShown(v) {
     if (v === shown) return;
-    shown = v; ch.classList.toggle('gone', !v); emitStrip();
+    shown = v; ch.classList.toggle('gone', !effective()); emitStrip();
   }
+  const offStrip = ctx.bus ? ctx.bus.on('strip', (p) => {
+    if (!p || p.owner !== 'duels') return;
+    owners.duels = Boolean(p.busy);
+    ch.classList.toggle('gone', !effective()); emitStrip();
+  }) : null;
   const tierNow = () => (tiers.length ? Math.floor((Date.now() % sched.everyMs) / sched.perTierMs) % tiers.length : 0);
   function evaluate() {
     if (dead) return;
@@ -136,6 +146,7 @@ export function mount(root, ctx = {}) {
   evaluate();
   if (sched.every) tick = setInterval(evaluate, 1000);
   const offReq = ctx.bus ? ctx.bus.on('strip-request', emitStrip) : null;
+  if (ctx.bus) ctx.bus.emit('strip-request', {}); // learn whether duels already hold the strip
 
   const off = ctx.bus ? ctx.bus.on('donation', (p) => {
     if (dead || !p) return;
@@ -160,7 +171,8 @@ export function mount(root, ctx = {}) {
     unmount() {
       dead = true; clearInterval(timer); clearInterval(tick); clearStamp();
       if (typeof offReq === 'function') offReq();
-      if (shown && ctx.bus) ctx.bus.emit('strip', { owner: 'challenges', busy: false });
+      if (typeof offStrip === 'function') offStrip();
+      if (effective() && ctx.bus) ctx.bus.emit('strip', { owner: 'challenges', busy: false });
       if (typeof off === 'function') off();
       wrap.remove();
     },

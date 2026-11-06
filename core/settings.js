@@ -17,6 +17,8 @@ export const DEFAULTS = {
     ] },
     // music: needs the local GoblinMusic.exe; delayMs aligns the wave with the stream's audio.
     music: { enabled: true, url: 'http://127.0.0.1:47800', delayMs: 0 },
+    // duelsLink: room code of the Goblin Duels overlay (from PDBull); empty = off. Also ?duelsRoom= on overlay.html.
+    duelsLink: { enabled: true, room: '' },
     messages: { enabled: true, title: '', text: '5$ = 1v1 ranked or 1v1 vs you' },
     latest: { enabled: true },
     chat: { enabled: true, channel: 'swedishgoblin', lines: 6 },

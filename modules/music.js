@@ -127,7 +127,7 @@ export function mount(root, ctx = {}) {
     [0, '#a8ff1f', 2.6, 0.42, 0.5, 0.47],
   ];
 
-  let connected = false, busy = false, np = null, artKey = '', es = null, retry = 0, raf = 0, dead = false;
+  let connected = false, busy = false, owners = {}, np = null, artKey = '', es = null, retry = 0, raf = 0, dead = false;
   const queue = [];
   const lv = new Array(BANDS).fill(0), raw = new Array(BANDS).fill(0);
   const trace = Array.from({ length: BANDS }, () => new Array(POINTS).fill(0));
@@ -200,7 +200,7 @@ export function mount(root, ctx = {}) {
 
   const off = ctx.bus ? ctx.bus.on('strip', (p) => {
     if (!p || p.owner === 'music') return;
-    busy = Boolean(p.busy); apply();
+    owners[p.owner] = Boolean(p.busy); busy = Object.values(owners).some(Boolean); apply();
   }) : null;
   if (ctx.bus) ctx.bus.emit('strip-request', {});
 
