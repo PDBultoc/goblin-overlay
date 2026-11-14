@@ -13,7 +13,7 @@ export const avgElo = (players) => {
 export const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 
 const CSS = `
-.mb{left:560px;top:62px;width:800px;height:58px;display:grid;grid-template-columns:1fr 70px 1fr;align-items:center;
+.mb{left:830px;top:32px;width:755px;height:58px;display:grid;grid-template-columns:1fr 70px 1fr;align-items:center;
   overflow:visible;animation:mbIn .8s cubic-bezier(.2,1.4,.4,1) both}
 .mb .s{display:flex;align-items:center;gap:10px;padding:0 16px;min-width:0;height:56px}
 .mb .s.o{flex-direction:row-reverse;text-align:right}
@@ -26,18 +26,19 @@ const CSS = `
 .mb .s.o .elo{margin-left:0;margin-right:auto}
 .mb .s.g .elo{color:var(--acid)}
 .mb .vs{text-align:center;font:800 22px/1 Oxanium,sans-serif;letter-spacing:.12em;color:var(--mute)}
-.mb.tg{height:auto;min-height:58px;width:980px;left:470px;grid-template-columns:1fr 1fr;padding:5px 0 7px}
+.mb.tg{height:auto;min-height:58px;width:755px;left:830px;grid-template-columns:1fr 1fr;padding:5px 0 7px}
 .mb .col{padding:0 16px;min-width:0}
 .mb .col+.col{border-left:1px solid rgba(255,255,255,.08)}
 .mb .col.g{background:var(--a15)}
 .mb .colh{font:800 14px/1 Oxanium,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);height:22px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 .mb .col.g .colh{color:var(--acid)}
-.mb .pl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2px 14px}
+.mb .pl{display:grid;grid-template-columns:minmax(0,1fr);gap:0 14px}
 /* name shrinks with an ellipsis, the civ never does: no more overlap in 4v4 */
 .mb .p{display:flex;align-items:center;gap:6px;min-width:0;font:600 14px/20px Inter,sans-serif;white-space:nowrap}
 .mb .p i{flex:none;width:9px;height:9px;border-radius:50%}
 .mb .p .n{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .mb .p em{flex:none;font-style:normal;color:var(--mute)}
+.mb .p .r{flex:none;margin-left:auto;padding-left:4px;font:700 14px/20px Oxanium,sans-serif;font-variant-numeric:tabular-nums}
 @keyframes mbIn{from{transform:translateY(-70px) scaleY(1.3);opacity:0}to{transform:none;opacity:1}}
 `;
 function injectCss() {
@@ -61,12 +62,24 @@ export function withMyName(m, name) {
   return { ...m, me: fix(m.me), myTeam: m.myTeam.map(fix) };
 }
 
-export function renderBar(m, now, min) {
+// 1v1 ladder ratings of every player (Paul 2026-11-14): one leaderboard request per match.
+export function ratings1v1Url(m) {
+  if (!m) return null;
+  const ids = [...(m.myTeam || []), ...(m.enemies || []).flat()].map((p) => p.profileId).filter((x) => x != null);
+  return ids.length ? `https://data.aoe2companion.com/api/leaderboards/rm_1v1?profile_ids=${ids.join(',')}` : null;
+}
+export function parse1v1(j) {
+  const out = {};
+  for (const p of (j && j.players) || []) if (p && p.profileId != null && p.rating != null) out[p.profileId] = p.rating;
+  return out;
+}
+
+export function renderBar(m, now, min, r1) {
   if (m.mode === '1v1') {
     return { cls: 'pn mb slime', html: side(m, m.me, 'g', now, min) + '<div class="vs">VS</div>' + side(m, m.enemies[0][0], 'o', now, min) };
   }
   const col = (players, cls, label) => `<div class="col ${cls}"><div class="colh"><span>${label}</span><span>avg ${avgElo(players) ?? '-'}</span></div><div class="pl">` +
-    players.map((p) => `<div class="p"><i style="background:${esc(p.colorHex || '#888')}"></i><span class="n">${esc(p.name)}</span><em>${esc(visibleCiv(m, p, now, min))}</em></div>`).join('') + '</div></div>';
+    players.map((p) => `<div class="p"><i style="background:${esc(p.colorHex || '#888')}"></i><span class="n">${esc(p.name)}</span><em>${esc(visibleCiv(m, p, now, min))}</em>${r1 ? `<b class="r">${r1[p.profileId] ?? '-'}</b>` : ''}</div>`).join('') + '</div></div>';
   return { cls: 'pn mb tg slime', html: col(m.myTeam, 'g', 'Goblin team') + m.enemies.map((t) => col(t, 'o', 'Enemy')).join('') };
 }
 
@@ -79,11 +92,24 @@ export function mount(root, ctx) {
   let cur = null;
   let shownId = null;
   let tick = null;
+  // 1v1 ratings for team games, fetched once per match id (null map = not loaded: no column)
+  const r1 = { id: null, map: null };
+  const want1v1 = (m) => {
+    if (m.mode === '1v1' || r1.id === m.id) return;
+    r1.id = m.id; r1.map = null;
+    const url = ratings1v1Url(m);
+    if (!url) return;
+    fetch(url).then((res) => (res.ok ? res.json() : null)).then((j) => {
+      if (r1.id !== m.id || !j) return;
+      r1.map = parse1v1(j); render();
+    }).catch(() => {});
+  };
 
   const render = () => {
     if (!cur || !cur.running) { el.style.display = 'none'; shownId = null; return; }
     const min = civMinutes(settings.get());
-    const r = renderBar(withMyName(cur, settings.get().modules.cam?.name), Date.now(), min);
+    want1v1(cur);
+    const r = renderBar(withMyName(cur, settings.get().modules.cam?.name), Date.now(), min, r1.id === cur.id ? r1.map : null);
     el.className = r.cls;
     if (shownId === cur.id) el.style.animation = 'none';
     else { el.style.animation = ''; shownId = cur.id; }

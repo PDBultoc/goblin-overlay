@@ -120,3 +120,14 @@ test('controller: stop clears pending timers', () => {
   c.start(); c.event('match-start', match('Franks')); c.stop(); run(10000);
   assert.deepEqual(log, []);
 });
+
+test('DRESS_CSS: every rule is closed (an unclosed rule swallowed the panel ornament rules, 2026-11-14)', async () => {
+  const { DRESS_CSS } = await import('../modules/dress/stage.js');
+  let depth = 0;
+  for (const line of DRESS_CSS.split('\n')) {
+    for (const ch of line) { if (ch === '{') depth++; if (ch === '}') depth--; }
+    assert.ok(depth === 0 || depth === 1 && /[{;,]\s*$/.test(line), `rule left open after: ${line.slice(0, 60)}`);
+    assert.ok(depth >= 0);
+  }
+  assert.equal(depth, 0);
+});

@@ -25,8 +25,10 @@ function memStorage() { const m = new Map(); return { getItem: (k) => (m.has(k) 
 // Neither exists for a prototype: answer both locally so the live modules run unchanged and the console stays clean.
 function stubNetwork() {
   const realFetch = window.fetch.bind(window);
+  // leaderboard = demo 1v1 ratings (team bar), everything else from aoe2companion = no matches
+  const LB = '{"players":[{"profileId":1,"rating":1257},{"profileId":11,"rating":1585},{"profileId":12,"rating":1190},{"profileId":21,"rating":1402},{"profileId":23,"rating":1311}]}';
   window.fetch = (url, opts) => (String(url).includes('aoe2companion')
-    ? Promise.resolve(new Response('{"matches":[]}', { status: 200, headers: { 'content-type': 'application/json' } }))
+    ? Promise.resolve(new Response(String(url).includes('leaderboards') ? LB : '{"matches":[]}', { status: 200, headers: { 'content-type': 'application/json' } }))
     : realFetch(url, opts));
   const P = 96;
   window.EventSource = class {
@@ -86,7 +88,16 @@ async function mountOverlay(civ) {
     mod.mount(layer, { settings, bus, cfg: s.modules[name] });
   }
   const me = { profileId: 1, name: 'SwedishGoblinTwitch', civ: civ.name, rating: 1240, country: 'se', colorHex: '#405BFF' };
-  bus.emit('match-start', { match: {
+  // ?tg=2|3|4 = a team game of that size (team bar with 1v1 ratings) instead of the 1v1
+  const n = Number(new URLSearchParams(location.search).get('tg')) || 0;
+  const pl = (id, name, c, col) => ({ profileId: id, name, civ: c, rating: 1329, country: 'se', colorHex: col });
+  const mates = [pl(11, 'aje.omar', 'Italians', '#405BFF'), pl(12, 'KaptenCookie', 'Celts', '#00C8C8'), pl(13, 'NordicWololo', 'Goths', '#FF8C00')];
+  const foes = [pl(21, 'PwNaSauRuS', 'Romans', '#FF0000'), pl(22, 'CORT3S', 'Berbers', '#FFFF00'), pl(23, 'Frozen - Hot Pepper Pizza', 'Jurchens', '#FF00FF'), pl(24, 'AxeMaiden', 'Franks', '#808080')];
+  if (n >= 2) bus.emit('match-start', { match: {
+    id: 1, started: new Date(Date.now() - 6e5).toISOString(), finished: null, running: true, mode: `${n}v${n}`, map: 'Arabia', hideCivs: false,
+    me, myTeam: [me, ...mates.slice(0, n - 1)], enemies: [foes.slice(0, n)],
+  } });
+  else bus.emit('match-start', { match: {
     id: 1, started: new Date(Date.now() - 6e5).toISOString(), finished: null, running: true, mode: '1v1', map: 'Arabia', hideCivs: false,
     me, myTeam: [me], enemies: [[{ profileId: 2, name: 'Frozen - Hot Pepper Pizza', civ: 'Jurchens', rating: 1321, country: 'it', colorHex: '#FF0000' }]],
   } });

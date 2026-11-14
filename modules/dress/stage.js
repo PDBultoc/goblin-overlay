@@ -45,6 +45,7 @@ export const DRESS_CSS = `
 [data-mod=dress] .dplate b{font:800 17px/1 Oxanium,sans-serif;letter-spacing:.08em}
 [data-mod=dress] .dplate span{font-size:20px;line-height:1}
 [data-mod=dress] .dplate .mark{flex:none;width:24px;height:17px;filter:drop-shadow(0 0 4px #a8ff1f99);
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 80'><path fill='%23a8ff1f' d='M40 78C35 50 41 20 70 19c29 1 35 31 30 59zM45 36 3 8l13 14L1 23l20 10-11 6 33 13zM95 36l42-28-13 14 15 1-20 10 11 6-33 13z'/><path fill='%23061003' d='M50 43l15 4-1.5 5.5c-6 .5-11.5-3.5-13.5-9.5zM90 43l-15 4 1.5 5.5c6 .5 11.5-3.5 13.5-9.5zM47 58c8 4 38 4 46 0-4 10-12 15-23 15s-19-5-23-15z'/></svg>") center/contain no-repeat}
 [data-mod=dress][data-phase=in] .dplate{animation:plateIn .7s 2.1s cubic-bezier(.2,1.6,.4,1) both}
 [data-mod=dress][data-phase=out] .dplate{animation:fout .25s both}
 @keyframes plateIn{from{transform:perspective(500px) rotateX(-100deg);opacity:0}30%{opacity:1}to{transform:perspective(500px) rotateX(0);opacity:1}}
@@ -99,7 +100,7 @@ function fill(layer, kit, civ) {
       <div class="dstd" style="left:${kit.mount.x}px;top:${kit.mount.y}px">${civ.standard}</div>
       <div class="dplate"><i class="mark"></i><b>SWEDISHGOBLIN</b><span>of the ${civ.name}</span></div>
     </div>
-    <div class="dpen" style="left:572px;top:118px">${civ.pennant || ''}</div>
+    <div class="dpen" style="left:842px;top:88px">${civ.pennant || ''}</div>
     <div class="dfx amb"></div><div class="dfx burst"></div>`;
 }
 
@@ -153,7 +154,17 @@ export function createDress(stage, layer, kit, civ) {
     if (civ.costume.front) body.appendChild(mk(civ.costume.front, 'front'));
   }
   // modules re-render (match bar on every update, cam on a remount): keep skin + costume on while dressed
+  // the pennant hangs from the match bar's bottom-left corner, whatever its size (1v1 / 2v2 / 4v4); hidden without a bar
+  const pen = layer.querySelector('.dpen');
+  function placePen() {
+    const mb = stage.querySelector('.mb');
+    const on = mb && mb.style.display !== 'none' && mb.offsetHeight > 0;
+    pen.style.visibility = on ? '' : 'hidden';
+    if (on) { pen.style.left = (mb.offsetLeft + 12) + 'px'; pen.style.top = (mb.offsetTop + mb.offsetHeight - 2) + 'px'; }
+  }
+  placePen();
   const mo = new MutationObserver(() => {
+    placePen();
     if (!keep) return;
     panels().forEach((p) => { if (!p.classList.contains('kd')) skin(p, false); });
     const g = gob(); if (g && !g.querySelector('.cos')) costume(true);
