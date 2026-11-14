@@ -1,0 +1,92 @@
+/* "Dressed for War" prototype: harness + choreography shared by every kit. Kit and civ looks live in kit-*.js / civ-*.js. */
+
+/* ---------- harness (prototype only) ---------- */
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px}
+#stage>[data-mod]{position:absolute;inset:0;pointer-events:none}
+.fakecam{position:absolute;left:24px;top:640px;width:400px;height:225px;background:url(../game.webp) -15px -840px/2016px 1134px no-repeat}
+#dress-ctl{position:fixed;right:12px;top:12px;z-index:9999;width:196px;display:flex;flex-direction:column;gap:6px;padding:10px;
+  font:600 12px/1.3 system-ui,sans-serif;color:#ddd;background:#111d;border:1px solid #333;border-radius:10px;backdrop-filter:blur(8px)}
+#dress-ctl b{font-size:13px;color:#a8ff1f}
+#dress-ctl nav{display:flex;gap:4px}
+#dress-ctl nav a{flex:1;text-align:center;color:#aaa;text-decoration:none;border:1px solid #333;border-radius:5px;padding:4px 0}
+#dress-ctl nav a.on{color:#000;background:#a8ff1f;border-color:#a8ff1f}
+#dress-ctl nav select{flex:2;min-width:0;font:inherit;color:#ddd;background:#222;border:1px solid #3a3a3a;border-radius:5px;padding:3px 2px}
+#dress-ctl button{all:unset;cursor:pointer;background:#222;border:1px solid #3a3a3a;border-radius:6px;padding:7px 8px}
+#dress-ctl button:hover{background:#2e3a24;border-color:#6c3}
+#dress-ctl small{font-weight:400;color:#888}
+
+/* ---------- accent: the civ's colours replace the acid green everywhere except the mascot and the logo mark ---------- */
+#stage.accent,#stage.accent .gx{--acid:var(--civ);--acid2:var(--civ2)}
+/* no goal bar in Goblin's scene: the mascot sits on the camera frame instead of floating (prototype of Paul's ask, 2026-11-14) */
+#stage .gob{--acid:#a8ff1f;translate:0 55px;transition:translate .55s cubic-bezier(.3,1.5,.5,1)}
+#stage:is([data-dress=in],[data-dress=on]) .gob{translate:0 var(--perch,0px)}
+
+/* the green frame hands over to the kit frame */
+#stage .cam,#stage .cam .br,#stage .cam .plate{transition:opacity .35s,border-color .35s,box-shadow .35s}
+#stage:is([data-dress=in],[data-dress=on]) .cam{border-color:transparent;box-shadow:none}
+#stage:is([data-dress=in],[data-dress=on]) .cam :is(.br,.plate){opacity:0}
+#stage[data-dress=in] .cam .plate{transition-delay:1.9s}
+
+/* ---------- mascot: poof, change, pop back ---------- */
+#stage .gob g.body{transition:transform .32s cubic-bezier(.5,0,.8,.3)}
+#stage .gob.dk g.body{transform:scale(0) rotate(-28deg)}
+#stage .gob .cos{pointer-events:none}
+
+/* ---------- dress layer ---------- */
+[data-mod=dress]{z-index:3}
+[data-mod=dress][data-phase=off]{visibility:hidden}
+[data-mod=dress][data-phase=off] *{animation-play-state:paused !important}
+[data-mod=dress] .dz,[data-mod=dress] .dstd,[data-mod=dress] .dpen{position:absolute}
+[data-mod=dress] .dframe{position:absolute;left:0;top:0;overflow:visible;filter:drop-shadow(0 12px 12px rgba(0,0,0,.55))}
+[data-mod=dress] .dstd svg,[data-mod=dress] .dpen svg{display:block;overflow:visible;filter:drop-shadow(4px 10px 8px rgba(0,0,0,.5))}
+[data-mod=dress] .dshade{position:absolute;inset:0;opacity:0;transition:opacity .9s}
+[data-mod=dress]:is([data-phase=in],[data-phase=on]) .dshade{opacity:1;transition-delay:.7s}
+
+/* pieces fly in from --dx/--dy (kit sets them per piece) and land with a small overshoot; --d = delay in s */
+[data-mod=dress] .pc{transform-box:fill-box;transform-origin:center}
+[data-mod=dress][data-phase=in] .pc{animation:pcIn .7s calc(var(--d,0)*1s + .15s) cubic-bezier(.2,1.35,.35,1) both}
+[data-mod=dress][data-phase=out] .pc{animation:pcOut .45s calc(var(--o,0)*1s) cubic-bezier(.6,0,.9,.4) both}
+@keyframes pcIn{from{transform:translate(var(--dx,0px),var(--dy,0px)) rotate(var(--r,0deg)) scale(var(--sc,1));opacity:0}35%{opacity:1}to{transform:none;opacity:1}}
+@keyframes pcOut{to{transform:translate(var(--dx,0px),var(--dy,0px)) rotate(var(--r,0deg));opacity:0}}
+
+/* cloth unrolls from its top edge */
+[data-mod=dress] .unroll{transform-box:fill-box;transform-origin:50% 0}
+[data-mod=dress][data-phase=in] .unroll{animation:unroll 1s calc(var(--d,1.3)*1s) cubic-bezier(.3,1.5,.4,1) both}
+[data-mod=dress][data-phase=out] .unroll{animation:rollup .4s cubic-bezier(.6,0,.9,.4) both}
+@keyframes unroll{from{transform:scaleY(0)}to{transform:none}}
+@keyframes rollup{to{transform:scaleY(0)}}
+
+/* things that simply appear late (snow, glow, feathers settling) */
+[data-mod=dress][data-phase=in] .fin{animation:fin .9s calc(var(--d,1.6)*1s) both}
+[data-mod=dress][data-phase=out] .fin{animation:fout .3s both}
+@keyframes fin{from{opacity:0}to{opacity:1}}
+@keyframes fout{to{opacity:0}}
+
+/* name plate: flips down from the bottom beam */
+[data-mod=dress] .dplate{position:absolute;left:-10px;bottom:-16px;height:36px;display:flex;align-items:center;gap:8px;padding:0 18px 0 10px;
+  white-space:nowrap;transform-origin:50% 0;color:#fff}
+[data-mod=dress] .dplate b{font:800 17px/1 Oxanium,sans-serif;letter-spacing:.08em}
+[data-mod=dress] .dplate span{font-size:20px;line-height:1}
+/* the logo mark keeps the toxic green in every civ */
+[data-mod=dress] .dplate .mark{flex:none;width:24px;height:17px;filter:drop-shadow(0 0 4px #a8ff1f99);
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 80'><path fill='%23a8ff1f' d='M40 78C35 50 41 20 70 19c29 1 35 31 30 59zM45 36 3 8l13 14L1 23l20 10-11 6 33 13zM95 36l42-28-13 14 15 1-20 10 11 6-33 13z'/><path fill='%23061003' d='M50 43l15 4-1.5 5.5c-6 .5-11.5-3.5-13.5-9.5zM90 43l-15 4 1.5 5.5c6 .5 11.5-3.5 13.5-9.5zM47 58c8 4 38 4 46 0-4 10-12 15-23 15s-19-5-23-15z'/></svg>") center/contain no-repeat}
+[data-mod=dress][data-phase=in] .dplate{animation:plateIn .7s 2.1s cubic-bezier(.2,1.6,.4,1) both}
+[data-mod=dress][data-phase=out] .dplate{animation:fout .25s both}
+@keyframes plateIn{from{transform:perspective(500px) rotateX(-100deg);opacity:0}30%{opacity:1}to{transform:perspective(500px) rotateX(0);opacity:1}}
+
+/* ---------- panels: kit skin arrives as a ripple outward from the camera ---------- */
+#stage .pn.kd-in{animation:kdIn .9s cubic-bezier(.2,.9,.2,1)}
+@keyframes kdIn{0%{filter:brightness(2.8) saturate(1.5)}100%{filter:none}}
+#stage .pn>.kd-t,#stage .pn>.kd-b{position:absolute;left:0;right:0;display:block;pointer-events:none;animation:fin .8s .15s both;z-index:3}
+#stage .pn>.kd-t{bottom:100%}
+#stage .pn>.kd-b{top:100%}
+#stage.skinned .lip,#stage.skinned .drop{opacity:0}
+
+/* ---------- particles ---------- */
+[data-mod=dress] .dfx{position:absolute;left:0;top:58px;width:1920px;height:822px;overflow:hidden;z-index:6}
+[data-mod=dress] .dfx.amb{opacity:0;transition:opacity 1.4s}
+[data-mod=dress][data-phase=in] .dfx.amb{opacity:1;transition-delay:1.8s}
+[data-mod=dress][data-phase=on] .dfx.amb{opacity:1}
+[data-mod=dress] .dfx .p{position:absolute;display:block;will-change:transform}
+
+@media (prefers-reduced-motion:reduce){[data-mod=dress] .dfx{display:none}}
