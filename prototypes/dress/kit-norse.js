@@ -62,8 +62,9 @@ ${bracket(-24, -18, 1, 1, .5)}${bracket(424, -18, -1, 1, .56)}${bracket(-24, 241
   </g></g>
 </g>
 <g class="pc" style="--dx:80px;--d:.95;--o:0">
-  <rect x="410" y="-53" width="114" height="6" rx="3" fill="url(#nH)" stroke="#170d05" stroke-width=".8"/>
-  <path d="M419 -56l14 12M433 -56l-14 12" stroke="#c8b38a" stroke-width="2" stroke-linecap="round"/>
+  <path d="M433 -18L458 -48" stroke="#3a2512" stroke-width="5" stroke-linecap="round"/><path d="M434 -20L457 -47" stroke="#86603a" stroke-width="1.600" stroke-linecap="round" opacity=".7"/>
+  <rect x="430" y="-53" width="94" height="6" rx="3" fill="url(#nH)" stroke="#170d05" stroke-width=".8"/>
+  <path d="M420 -55h13M420 -51.500h13M420 -48h13" stroke="#c8b38a" stroke-width="1.600" stroke-linecap="round"/>
   <path class="fin" style="--d:2" fill="url(#nIce)" opacity=".85" d="M446 -47l2 9 2-9zM489 -47l3 13 2-13zM512 -47l2 7 2-7z"/>
   <path class="fin" style="--d:1.9" fill="#f4fbff" d="${snow(440, 522, -54, 5)}"/>
 </g>

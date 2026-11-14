@@ -17,7 +17,7 @@ const standard = `<svg width="120" height="250" viewBox="0 0 120 250">
     <circle cx="60" cy="60" r="27" fill="${GOLD}" stroke="#5a3e08" stroke-width="1.200"/>
     ${Array.from({ length: 14 }, (_, i) => { const a = i / 14 * Math.PI * 2; return `<circle cx="${(60 + Math.cos(a) * 23.5).toFixed(1)}" cy="${(60 + Math.sin(a) * 23.5).toFixed(1)}" r="1.700" fill="${RED}"/>`; }).join('')}
     <circle cx="60" cy="60" r="20" fill="var(--civ)" stroke="#06382d" stroke-width="1.200"/><circle cx="60" cy="60" r="15" fill="#0c2f29" stroke="${GOLD}" stroke-width="1"/>
-    <path transform="translate(60 60) scale(.82)" d="M-4-13h8v9h9v8h-9v9h-8v-9h-9v-8h9z" fill="${GOLD}" stroke="#5a3e08" stroke-width=".8"/>
+    <path transform="translate(60 60) scale(.82)" d="M0-13L13 0L0 13L-13 0ZM0-6L6 0L0 6L-6 0Z" fill-rule="evenodd" fill="${GOLD}" stroke="#5a3e08" stroke-width=".8"/>
     <circle cx="60" cy="60" r="3.600" fill="var(--civ)" stroke="#06382d"/><path d="M48 49a15 15 0 0 1 12-5" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.600" stroke-linecap="round"/>
   </g>
 </svg>`;
@@ -35,7 +35,7 @@ const pennant = `<svg width="34" height="74" viewBox="0 0 34 74">
 const frame = `<g class="pc" style="--dy:-70px;--r:160deg;--d:1.100;--o:0">
   ${[-24, -8, 8, 24].map((a, i) => `<g transform="rotate(${180 + a} 432 150) translate(432 139)">${feather(26, 4, i % 2 ? GREEN : RED, i % 2 ? 'var(--civ)' : GOLD, 'xf', i)}</g>`).join('')}
   <circle cx="432" cy="150" r="13" fill="${GOLD}" stroke="#5a3e08" stroke-width="1.100"/><circle cx="432" cy="150" r="9.500" fill="var(--civ)" stroke="#06382d"/>
-  <path transform="translate(432 150) scale(.5)" d="M-4-13h8v9h9v8h-9v9h-8v-9h-9v-8h9z" fill="${GOLD}" stroke="#5a3e08" stroke-width="1.400"/>
+  <path transform="translate(432 150) scale(.5)" d="M0-13L13 0L0 13L-13 0ZM0-6L6 0L0 6L-6 0Z" fill-rule="evenodd" fill="${GOLD}" stroke="#5a3e08" stroke-width="1.400"/>
   <path d="M432 137v-22" stroke="#5a3e08" stroke-width="1.400"/>
 </g>`;
 
