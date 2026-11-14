@@ -1,4 +1,5 @@
 // cam: 400x225 frame at (24,640), name plate, perched mascot (blink + ear twitch).
+// The mascot perches on the goal bar; with the goal module off it sits on the camera frame.
 const CSS = `
 [data-mod=cam] .gob .ear{transform-box:fill-box}
 [data-mod=cam] .gob .ear.l{transform-origin:100% 60%;animation:earTwL 9s infinite}
@@ -19,6 +20,35 @@ const GOBLIN = `<svg class="gob" viewBox="0 0 140 96" aria-hidden="true"><g clas
   <path class="sil" d="M28 91c0-8 7-12 16-10 6 1 9 5 9 10l-1.5 5-3-4-3 4.5-3-4.5-3 4.5-3-4.5-3 4-2.5-5z"/>
   <path class="sil" transform="translate(60 0)" d="M28 91c0-8 7-12 16-10 6 1 9 5 9 10l-1.5 5-3-4-3 4.5-3-4.5-3 4.5-3-4.5-3 4-2.5-5z"/>
 </g></svg>`;
+
+// Where the mascot sits: 'goal' = on the goal bar, 'cam' = on the camera frame's top edge.
+export function perchOf(s) {
+  const g = s && s.modules && s.modules.goal;
+  return g && g.enabled ? 'goal' : 'cam';
+}
+
+// The walk: every 4-7 minutes the mascot waddles along its perch to the left corner,
+// looks around and comes back (9 s, CSS only: .gob.walk in toxic.css).
+export function walkDelayMs(rnd) {
+  const r = Number.isFinite(rnd) ? Math.min(1, Math.max(0, rnd)) : 0;
+  return 240000 + Math.round(r * 180000);
+}
+export const walkOn = (cfg) => !(cfg && cfg.walk === false);
+// Events that put something big on screen; the walk freezes (or waits) for that long.
+export const HOLD_EVENTS = ['follow', 'sub', 'bits', 'donation', 'match-start', 'match-end'];
+export function holdMs(type, s) {
+  const m = (s && s.modules) || {};
+  if (type === 'match-start') {
+    const i = m.intro || {};
+    return i.enabled ? (Number(i.seconds) || 3.5) * 1000 + 500 : 0;
+  }
+  if (type === 'match-end') return m.result && m.result.enabled ? 5500 : 0;
+  if (['follow', 'sub', 'bits', 'donation'].includes(type)) {
+    const sec = Number(m.alerts && m.alerts.seconds);
+    return Number.isFinite(sec) && sec > 0 ? sec * 1000 : 8000;
+  }
+  return 0;
+}
 
 function injectCss(name, css) {
   if (document.head.querySelector(`style[data-mod="${name}"]`)) return;
@@ -48,7 +78,51 @@ export function mount(root, ctx = {}) {
 
   const g = document.createElement('div');
   g.innerHTML = GOBLIN; // static markup, no user input
-  wrap.append(cam, g.firstElementChild);
+  const gob = g.firstElementChild;
+  wrap.append(cam, gob);
   root.appendChild(wrap);
-  return { unmount() { wrap.remove(); } };
+
+  // cam is not re-mounted when the goal module is switched, so follow the settings here.
+  const st = ctx.settings;
+  const place = () => gob.classList.toggle('on-cam', perchOf(st && st.get ? st.get() : null) === 'cam');
+  place();
+  const off = st && st.onChange ? st.onChange(place) : null;
+
+  // Walk now and then. `hold` pauses the CSS animation while an alert, the intro
+  // card or the result card is up; a walk that falls due meanwhile starts afterwards.
+  const offs = [];
+  let walkTimer = null, holdTimer = null, heldUntil = 0, due = false;
+  const start = () => { due = false; gob.classList.add('walk'); };
+  const tryWalk = () => { if (Date.now() < heldUntil) due = true; else start(); };
+  const schedule = () => { clearTimeout(walkTimer); walkTimer = setTimeout(tryWalk, walkDelayMs(Math.random())); };
+  const hold = (ms) => {
+    if (!(ms > 0)) return;
+    heldUntil = Math.max(heldUntil, Date.now() + ms);
+    gob.classList.add('hold');
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => { gob.classList.remove('hold'); if (due) start(); }, heldUntil - Date.now());
+  };
+  if (walkOn(cfg)) {
+    gob.addEventListener('animationend', (e) => {
+      if (e.animationName !== 'gobWalk') return;
+      gob.classList.remove('walk');
+      schedule();
+    });
+    schedule();
+    if (ctx.bus && ctx.bus.on) {
+      for (const type of HOLD_EVENTS) {
+        offs.push(ctx.bus.on(type, () => hold(holdMs(type, st && st.get ? st.get() : null))));
+      }
+      // panel button "Walk now" (also handy for checking the animation)
+      offs.push(ctx.bus.on('mascot-walk', () => { if (!gob.classList.contains('walk')) tryWalk(); }));
+    }
+  }
+  return {
+    unmount() {
+      if (typeof off === 'function') off();
+      offs.forEach((o) => { try { o && o(); } catch (e) { /* ignore */ } });
+      clearTimeout(walkTimer); clearTimeout(holdTimer);
+      wrap.remove();
+    },
+  };
 }

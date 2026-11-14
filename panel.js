@@ -263,7 +263,8 @@ function boot() {
   }
 
   const bodies = {
-    cam: () => [field('Name', m('cam', 'name'))],
+    cam: () => [field('Name', m('cam', 'name')),
+      el('div', { class: 'chk' }, [check('Mascot walks now and then', m('cam', 'walk'))])],
     matchbar: () => [],
     series: seriesBody,
     intro: () => [field('Seconds', m('intro', 'seconds'), 'number', { attrs: { min: '0', step: '0.5' } })],

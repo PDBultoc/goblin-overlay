@@ -2,7 +2,8 @@
 export const DEFAULTS = {
   glass: 0.55, profileId: 20186100, pollSec: 20,
   modules: {
-    cam: { enabled: true, name: 'SwedishGoblin' },
+    // walk: the mascot strolls along its perch every 4-7 minutes.
+    cam: { enabled: true, name: 'SwedishGoblin', walk: true },
     matchbar: { enabled: true },
     // mode 'playall' (PA100): score = full head-to-head since `since` out of `total`; manual = correction.
     series: { enabled: true, mode: 'bestof', bestOf: 3, total: 100, opponentId: null, since: null, manual: { me: 0, opp: 0 } },
