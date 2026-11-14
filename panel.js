@@ -6,8 +6,9 @@ import { createRemote, newRoom } from './core/remote.js';
 import { connectStreamlabs } from './core/streamlabs.js';
 import { latestRows } from './modules/latest.js';
 import { PA100 } from './modules/series.js';
+import { KITS } from './modules/dress/civs.js';
 
-export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'music', 'messages', 'latest', 'chat', 'alerts', 'duelsLink', 'monk'];
+export const MODULE_ORDER = ['cam', 'matchbar', 'series', 'intro', 'result', 'civdelay', 'goal', 'challenges', 'music', 'messages', 'latest', 'chat', 'alerts', 'duelsLink', 'dress', 'monk'];
 
 export function fmtMMSS(ms) {
   const s = Math.max(0, Math.ceil(ms / 1000));
@@ -124,6 +125,29 @@ function boot() {
   }
 
   const m = (n, k) => `modules.${n}.${k}`;
+
+  // Dressed for War: on/off is the card switch; Preview holds a civ until Green or the next match.
+  function dressBody() {
+    const sel = el('select', { 'aria-label': 'Preview civ' }, KITS.map(([, label, , civs]) =>
+      el('optgroup', { label }, civs.map(([id, name]) => el('option', { value: id, text: name })))));
+    const state = el('div', { class: 'note' });
+    const show = () => {
+      const p = getp('modules.dress.preview');
+      if (p && document.activeElement !== sel) sel.value = p;
+      state.textContent = p ? `Preview: ${sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : p} (until Green or the next match)` : 'Preview: off (green until a match starts)';
+    };
+    refreshers.push(show); show();
+    const put = (preview) => write('modules.dress', { ...(getp('modules.dress') || {}), preview, previewAt: Date.now() });
+    return [
+      el('div', { class: 'note', text: "During a match the overlay wears Goblin's civ, then turns green again." }),
+      el('div', { class: 'row' }, [el('label', { text: 'Preview civ' }), sel]),
+      el('div', { class: 'row' }, [
+        el('button', { type: 'button', text: 'Dress', onclick: () => put(sel.value) }),
+        el('button', { type: 'button', text: 'Green', onclick: () => put('') }),
+      ]),
+      state,
+    ];
+  }
 
   function seriesBody() {
     const oppLine = el('div', { class: 'note' });
@@ -309,6 +333,7 @@ function boot() {
       field('Streamlabs token', m('alerts', 'streamlabsToken'), 'password', { attrs: { autocomplete: 'off' } }),
     ],
     monk: monkBody,
+    dress: dressBody,
   };
 
   const cards = $('cards');

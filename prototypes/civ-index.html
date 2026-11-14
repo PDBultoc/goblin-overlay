@@ -31,7 +31,7 @@ a.c.err .t::after{content:'module error';margin-left:auto;color:#f66;font-size:1
 <p class="sub">56 ranked civs, 14 regional kits. Each card opens the prototype page (D dress, G green, R replay). Thumbnails are the latest dressed captures.</p>
 <main id="m"></main>
 <script type="module">
-import { KITS } from './dress/civs.js';
+import { KITS } from '../modules/dress/civs.js';
 const m = document.getElementById('m');
 const v = Date.now();
 m.innerHTML = KITS.map(([kit, label, mat, civs]) => `<section><h2>${label} <small>${mat} · ${civs.length}</small></h2><div class="grid">${
@@ -40,7 +40,7 @@ m.innerHTML = KITS.map(([kit, label, mat, civs]) => `<section><h2>${label} <smal
 for (const a of m.querySelectorAll('a.c')) {
   const id = a.dataset.id, im = a.querySelector('.im');
   const probe = new Image(); probe.onerror = () => { im.classList.add('none'); im.textContent = 'no capture yet'; }; probe.src = `../.claude/dress-shots/${id}-c0.png?${v}`;
-  import(`./dress/civ-${id}.js`).then((mod) => a.style.setProperty('--a', mod.default.accent)).catch(() => a.classList.add('err'));
+  import(`../modules/dress/civ-${id}.js`).then((mod) => a.style.setProperty('--a', mod.default.accent)).catch(() => a.classList.add('err'));
 }
 </script>
 </body>

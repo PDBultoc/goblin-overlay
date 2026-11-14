@@ -70,3 +70,11 @@ test('traceY: centred, a quiet band lies almost flat', () => {
 test('music defaults point at the local app', () => {
   assert.deepEqual(DEFAULTS.modules.music, { enabled: true, url: 'http://127.0.0.1:47800', delayMs: 0 });
 });
+
+test('waveColours: dressed = bass in the civ accent, mids in accent2, highs stay pale; else the green set', async () => {
+  const { waveColours } = await import('../modules/music.js');
+  assert.deepEqual(waveColours(null), ['#f4ff9a', '#38f2d0', '#a8ff1f']);
+  assert.deepEqual(waveColours({ phase: 'off' }), ['#f4ff9a', '#38f2d0', '#a8ff1f']);
+  assert.deepEqual(waveColours({ phase: 'on', accent: '#7fd3ff', accent2: '#c0392b' }), ['#f4ff9a', '#c0392b', '#7fd3ff']);
+  assert.deepEqual(waveColours({ phase: 'on', accent: '#7fd3ff' }), ['#f4ff9a', '#38f2d0', '#7fd3ff']);
+});

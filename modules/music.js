@@ -46,7 +46,14 @@ const FRAME_MS = 25; // the app sends 40 frames per second
 const RETRY_MS = 3000;
 export const POINTS = 96, BANDS = 3;
 
-export const visible = ({ connected, status, busy }) => Boolean(connected && status === 'playing' && !busy);
+// Wave colours [high, mid, bass] (LAYERS order). Dressed for War (Paul 2026-11-14, Q2 A): bass = civ accent,
+// mids = accent2, highs keep the pale yellow.
+export function waveColours(d) {
+  const on = d && d.phase === 'on';
+  return ['#f4ff9a', (on && d.accent2) || '#38f2d0', (on && d.accent) || '#a8ff1f'];
+}
+
+export const visible =({ connected, status, busy }) => Boolean(connected && status === 'playing' && !busy);
 
 const clamp = (x, lo, hi) => { const v = Number(x); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : 0; };
 
@@ -203,6 +210,8 @@ export function mount(root, ctx = {}) {
     owners[p.owner] = Boolean(p.busy); busy = Object.values(owners).some(Boolean); apply();
   }) : null;
   if (ctx.bus) ctx.bus.emit('strip-request', {});
+  const offDress = ctx.bus ? ctx.bus.on('dress', (d) => { waveColours(d).forEach((c, i) => { LAYERS[i][1] = c; }); }) : null;
+  if (ctx.bus) ctx.bus.emit('dress-request', {});
 
   connect();
   raf = requestAnimationFrame(draw);
@@ -213,6 +222,7 @@ export function mount(root, ctx = {}) {
       cancelAnimationFrame(raf); clearTimeout(retry);
       if (es) es.close();
       if (typeof off === 'function') off();
+      if (typeof offDress === 'function') offDress();
       wrap.remove();
     },
   };
