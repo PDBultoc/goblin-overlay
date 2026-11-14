@@ -164,8 +164,8 @@ const css = `
 /* panels: dark oak linenfold panelling, gilded fillet, iron corner hinges with curls, tracery cresting, cusped fringe */
 #stage.skinned[data-kit=central] .pn.kd:not(.mu){
   background:${GRAIN},repeating-linear-gradient(90deg,rgba(0,0,0,.35) 0 2px,rgba(255,220,170,.05) 2px 5px,transparent 5px 18px,rgba(0,0,0,.25) 18px 22px,transparent 22px 40px),
-    linear-gradient(180deg,rgba(56,36,20,.95),rgba(24,14,7,.96));
-  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),inset 0 0 34px rgba(0,0,0,.6)}
+    linear-gradient(180deg,rgba(56,36,20,calc(var(--glass,.55)*1.35)),rgba(24,14,7,calc(var(--glass,.55)*1.36)));
+  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,calc(var(--glass,.55)*1.28)),inset 0 0 34px rgba(0,0,0,.6)}
 #stage.skinned[data-kit=central] .pn.kd::after{inset:-7px;opacity:1;background:none;border:24px solid transparent;border-image:${EDGE} 24 / 24px stretch;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
 #stage.skinned[data-kit=central] .pn.kd.mu::after{inset:-7px}
 #stage.skinned[data-kit=central] .pn.kd>.kd-t{height:15px;margin:0 22px -4px;

@@ -123,8 +123,8 @@ const css = `
 
 /* panels: dark teak with a woven rattan sheen, lashed corners, a thatch fringe on top, bamboo chimes below */
 #stage.skinned[data-kit=sea] .pn.kd:not(.mu){
-  background:${WEAVE},linear-gradient(180deg,rgba(66,38,18,.95),rgba(28,15,6,.96));
-  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),inset 0 0 34px rgba(0,0,0,.5)}
+  background:${WEAVE},linear-gradient(180deg,rgba(66,38,18,calc(var(--glass,.55)*1.35)),rgba(28,15,6,calc(var(--glass,.55)*1.36)));
+  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,calc(var(--glass,.55)*1.28)),inset 0 0 34px rgba(0,0,0,.5)}
 #stage.skinned[data-kit=sea] .pn.kd::after{inset:-7px;opacity:1;background:none;border:22px solid transparent;border-image:${EDGE} 22 / 22px stretch;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
 #stage.skinned[data-kit=sea] .pn.kd>.kd-t{height:24px;margin:0 2px -9px;background:${THATCH} 0 0 repeat-x;transform-origin:50% 0;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent);

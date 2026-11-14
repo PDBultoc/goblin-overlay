@@ -171,8 +171,8 @@ const css = `
 
 /* panels: knotted madder pile, carpet border with stepped medallion corners, a loom rod on top, a tassel fringe below */
 #stage.skinned[data-kit=caucasus] .pn.kd:not(.mu){
-  background:${PILE},linear-gradient(180deg,rgba(84,18,20,.95),rgba(40,10,14,.97));
-  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),inset 0 0 34px rgba(0,0,0,.55),inset 0 0 0 1px rgba(234,220,188,.12)}
+  background:${PILE},linear-gradient(180deg,rgba(84,18,20,calc(var(--glass,.55)*1.35)),rgba(40,10,14,calc(var(--glass,.55)*1.38)));
+  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,calc(var(--glass,.55)*1.28)),inset 0 0 34px rgba(0,0,0,.55),inset 0 0 0 1px rgba(234,220,188,.12)}
 #stage.skinned[data-kit=caucasus] .pn.kd::after{inset:-7px;opacity:1;background:none;border:20px solid transparent;border-image:${EDGE} 20 / 20px stretch;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
 #stage.skinned[data-kit=caucasus] .pn.kd>.kd-t{height:15px;margin:0 2px -6px;
   background:linear-gradient(180deg,#9b6a3c,#7a4c26 40%,#3a210d) 0 0/100% 8px no-repeat,${ROD} 0 6px repeat-x;border-radius:4px 4px 0 0;filter:drop-shadow(0 2px 2px rgba(0,0,0,.6))}

@@ -142,8 +142,8 @@ const css = `
 
 /* panels: dark ashlar, a limestone rim with quoin corners and iron studs, a small battlement on top, the civ's dagged cloth below */
 #stage.skinned[data-kit=feudal] .pn.kd:not(.mu){
-  background:${ASHLAR},${GRAIN},linear-gradient(180deg,rgba(60,56,49,.95),rgba(29,27,23,.96));background-blend-mode:normal,soft-light,normal;
-  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),inset 0 0 36px rgba(0,0,0,.5)}
+  background:${ASHLAR},${GRAIN},linear-gradient(180deg,rgba(60,56,49,calc(var(--glass,.55)*1.35)),rgba(29,27,23,calc(var(--glass,.55)*1.36)));background-blend-mode:normal,soft-light,normal;
+  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,calc(var(--glass,.55)*1.28)),inset 0 0 36px rgba(0,0,0,.5)}
 #stage.skinned[data-kit=feudal] .pn.kd::after{inset:-7px;opacity:1;background:none;border:22px solid transparent;border-image:${EDGE} 22 / 22px stretch;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
 #stage.skinned[data-kit=feudal] .pn.kd>.kd-t{height:16px;margin:0 18px -6px;background:${CRENEL} 0 100% repeat-x;filter:drop-shadow(0 -1px 2px rgba(0,0,0,.4))}
 #stage.skinned[data-kit=feudal] .pn.kd>.kd-b{height:19px;margin:-3px 24px 0;transform-origin:50% 0;

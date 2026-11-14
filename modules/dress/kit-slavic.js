@@ -182,8 +182,8 @@ const css = `
 /* panels: painted blue planks in a pale carved surround, embroidered linen on top, a lace valance below */
 #stage.skinned[data-kit=slavic] .pn.kd:not(.mu){
   background:${GRAIN},repeating-linear-gradient(90deg,transparent 0 56px,rgba(0,0,0,.4) 56px 58px,rgba(220,235,255,.06) 58px 59px),
-    linear-gradient(180deg,rgba(36,62,86,.95),rgba(16,30,44,.97));
-  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),inset 0 0 34px rgba(0,0,0,.5)}
+    linear-gradient(180deg,rgba(36,62,86,calc(var(--glass,.55)*1.35)),rgba(16,30,44,calc(var(--glass,.55)*1.38)));
+  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,calc(var(--glass,.55)*1.28)),inset 0 0 34px rgba(0,0,0,.5)}
 #stage.skinned[data-kit=slavic] .pn.kd::after{inset:-7px;opacity:1;background:none;border:22px solid transparent;border-image:${EDGE} 22 / 22px stretch;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
 #stage.skinned[data-kit=slavic] .pn.kd>.kd-t{height:16px;margin:0 22px -4px;background:${STITCH} 0 0 repeat-x;box-shadow:0 2px 3px rgba(0,0,0,.5);
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent)}

@@ -167,8 +167,8 @@ const css = `
 
 /* panels: fitted dark ashlar, stone rim with checked tocapu corners, a woven band with feather tufts on top, quipu cords below */
 #stage.skinned[data-kit=andes] .pn.kd:not(.mu){
-  background:${ASHLAR},${SPECK},linear-gradient(180deg,rgba(62,58,53,.95),rgba(24,22,20,.96));background-blend-mode:normal,soft-light,normal;
-  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),inset 0 0 36px rgba(0,0,0,.5)}
+  background:${ASHLAR},${SPECK},linear-gradient(180deg,rgba(62,58,53,calc(var(--glass,.55)*1.35)),rgba(24,22,20,calc(var(--glass,.55)*1.36)));background-blend-mode:normal,soft-light,normal;
+  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,calc(var(--glass,.55)*1.28)),inset 0 0 36px rgba(0,0,0,.5)}
 #stage.skinned[data-kit=andes] .pn.kd::after{inset:-7px;opacity:1;background:none;border:22px solid transparent;border-image:${EDGE} 22 / 22px stretch;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
 #stage.skinned[data-kit=andes] .pn.kd>.kd-t{height:16px;margin:0 30px -6px;box-shadow:0 2px 3px rgba(0,0,0,.6);
   background:linear-gradient(#efe4cc 0 2px,transparent 2px calc(100% - 2px),#efe4cc 0),${MOTIFS} 0 2px repeat-x,

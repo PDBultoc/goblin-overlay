@@ -128,9 +128,9 @@ const css = `
 
 /* panels: mud plaster, moulded rim with toron ends, mud pinnacles on top, a woven strip with fringe below */
 #stage.skinned[data-kit=africa] .pn.kd:not(.mu){
-  background:${PGRAIN},radial-gradient(120% 80% at 18% 0%,rgba(214,150,90,.2),transparent 60%),linear-gradient(180deg,rgba(112,66,34,.95),rgba(50,27,13,.96));
+  background:${PGRAIN},radial-gradient(120% 80% at 18% 0%,rgba(214,150,90,.2),transparent 60%),linear-gradient(180deg,rgba(112,66,34,calc(var(--glass,.55)*1.35)),rgba(50,27,13,calc(var(--glass,.55)*1.36)));
   background-blend-mode:soft-light,normal,normal;border-color:rgba(30,14,4,.7);border-radius:12px;
-  box-shadow:0 22px 44px -18px rgba(0,0,0,.9),inset 0 0 36px rgba(30,12,2,.55),inset 0 1px 0 rgba(246,211,160,.25)}
+  box-shadow:0 22px 44px -18px rgba(0,0,0,calc(var(--glass,.55)*1.28)),inset 0 0 36px rgba(30,12,2,.55),inset 0 1px 0 rgba(246,211,160,.25)}
 #stage.skinned[data-kit=africa] .pn.kd::after{inset:-7px;opacity:1;background:none;border:22px solid transparent;border-image:${EDGE} 22 / 22px stretch;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
 #stage.skinned[data-kit=africa] .pn.kd>.kd-t{height:20px;margin:0 12px -7px;background:${PINS} 0 100% repeat-x;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 18px),transparent);mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 18px),transparent)}

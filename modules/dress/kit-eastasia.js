@@ -167,8 +167,8 @@ const css = `
 
 /* panels: black lacquer with a gloss, red lacquer rim, bronze cloud corners, a little glazed eave on top, tassels below */
 #stage.skinned[data-kit=eastasia] .pn.kd:not(.mu){
-  background:linear-gradient(115deg,transparent 35%,rgba(255,220,180,.06) 48%,transparent 60%),linear-gradient(180deg,rgba(44,12,12,.95),rgba(16,5,6,.97));
-  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),inset 0 0 34px rgba(0,0,0,.55)}
+  background:linear-gradient(115deg,transparent 35%,rgba(255,220,180,.06) 48%,transparent 60%),linear-gradient(180deg,rgba(44,12,12,calc(var(--glass,.55)*1.35)),rgba(16,5,6,calc(var(--glass,.55)*1.38)));
+  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,calc(var(--glass,.55)*1.28)),inset 0 0 34px rgba(0,0,0,.55)}
 #stage.skinned[data-kit=eastasia] .pn.kd::after{inset:-7px;opacity:1;background:none;border:23px solid transparent;border-image:${EDGE} 23 / 23px stretch;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
 #stage.skinned[data-kit=eastasia] .pn.kd.mu::after{inset:-7px}
 #stage.skinned[data-kit=eastasia] .pn.kd>.kd-t{height:14px;margin:0 -4px -6px}

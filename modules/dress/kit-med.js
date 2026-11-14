@@ -167,8 +167,8 @@ const css = `
 
 /* panels: nero portoro marble with gold veins, white marble rim with mosaic corners, mosaic band and roof tiles on top, gold leaves below */
 #stage.skinned[data-kit=med] .pn.kd:not(.mu){
-  background:${PORTORO},linear-gradient(180deg,rgba(40,36,31,.95),rgba(14,13,11,.96));background-size:320px 220px,auto;
-  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),inset 0 0 36px rgba(0,0,0,.55)}
+  background:${PORTORO},linear-gradient(180deg,rgba(40,36,31,calc(var(--glass,.55)*1.35)),rgba(14,13,11,calc(var(--glass,.55)*1.36)));background-size:320px 220px,auto;
+  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,calc(var(--glass,.55)*1.28)),inset 0 0 36px rgba(0,0,0,.55)}
 #stage.skinned[data-kit=med] .pn.kd::after{inset:-7px;opacity:1;background:none;border:22px solid transparent;border-image:${EDGE} 22 / 22px stretch;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
 #stage.skinned[data-kit=med] .pn.kd>.kd-t{height:21px;margin:0 8px -6px;background:${BAND} 0 100% repeat-x,${TILES} 3px 0 repeat-x;overflow:hidden}
 #stage.skinned[data-kit=med] .pn.kd>.kd-t::after{content:'';position:absolute;left:0;right:0;bottom:0;height:13px;

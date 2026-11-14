@@ -110,8 +110,8 @@ const css = `
 /* panels: tarred planks, iron corner plates, snow on top, icicles below */
 #stage.skinned[data-kit=norse] .pn.kd:not(.mu){
   background:${GRAIN},repeating-linear-gradient(0deg,transparent 0 50px,rgba(0,0,0,.55) 50px 52px,rgba(255,215,160,.07) 52px 53px),
-    linear-gradient(180deg,rgba(64,42,24,.94),rgba(26,16,8,.96));
-  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),inset 0 0 34px rgba(0,0,0,.55)}
+    linear-gradient(180deg,rgba(64,42,24,calc(var(--glass,.55)*1.33)),rgba(26,16,8,calc(var(--glass,.55)*1.36)));
+  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,calc(var(--glass,.55)*1.28)),inset 0 0 34px rgba(0,0,0,.55)}
 #stage.skinned[data-kit=norse] .pn.kd::after{inset:-7px;opacity:1;background:none;border:24px solid transparent;border-image:${EDGE} 24 / 24px stretch;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
 #stage.skinned[data-kit=norse] .pn.kd.mu::after{inset:-7px}
 #stage.skinned[data-kit=norse] .pn.kd>.kd-t{height:16px;margin:0 6px -5px;background:${SNOWCAP} 0 100% repeat-x;

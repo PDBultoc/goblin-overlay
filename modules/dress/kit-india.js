@@ -178,8 +178,8 @@ const css = `
 
 /* panels: red sandstone, buff moulded rim with inlaid marble corner stars, battlement merlons on top, silk tassel fringe below */
 #stage.skinned[data-kit=india] .pn.kd:not(.mu){
-  background:${SPECK},linear-gradient(180deg,rgba(98,38,22,.95),rgba(42,16,10,.96));background-blend-mode:soft-light,normal;
-  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),inset 0 0 36px rgba(0,0,0,.5)}
+  background:${SPECK},linear-gradient(180deg,rgba(98,38,22,calc(var(--glass,.55)*1.35)),rgba(42,16,10,calc(var(--glass,.55)*1.36)));background-blend-mode:soft-light,normal;
+  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,calc(var(--glass,.55)*1.28)),inset 0 0 36px rgba(0,0,0,.5)}
 #stage.skinned[data-kit=india] .pn.kd::after{inset:-7px;opacity:1;background:none;border:22px solid transparent;border-image:${EDGE} 22 / 22px stretch;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
 #stage.skinned[data-kit=india] .pn.kd>.kd-t{height:14px;margin:0 20px -5px;background:${KANGURA} 0 100% repeat-x;filter:drop-shadow(0 -1px 2px rgba(0,0,0,.5))}
 #stage.skinned[data-kit=india] .pn.kd>.kd-b{height:20px;margin:-2px 24px 0;background:${TGOLD} 0 0 repeat-x,var(--civ3);

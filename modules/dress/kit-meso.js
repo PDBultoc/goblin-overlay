@@ -86,8 +86,8 @@ const css = `
 /* panels: dark stone blocks, chiselled rim with stepped corners and jade studs, feather fans on top, bead drops below */
 #stage.skinned[data-kit=meso] .pn.kd:not(.mu){
   background:${SPECK},repeating-linear-gradient(0deg,transparent 0 58px,rgba(0,0,0,.6) 58px 60px,rgba(255,255,255,.06) 60px 61px),
-    linear-gradient(180deg,rgba(54,52,48,.95),rgba(22,21,20,.96));background-blend-mode:soft-light,normal,normal;
-  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),inset 0 0 36px rgba(0,0,0,.5)}
+    linear-gradient(180deg,rgba(54,52,48,calc(var(--glass,.55)*1.35)),rgba(22,21,20,calc(var(--glass,.55)*1.36)));background-blend-mode:soft-light,normal,normal;
+  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,calc(var(--glass,.55)*1.28)),inset 0 0 36px rgba(0,0,0,.5)}
 #stage.skinned[data-kit=meso] .pn.kd::after{inset:-7px;opacity:1;background:none;border:22px solid transparent;border-image:${EDGE} 22 / 22px stretch;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
 #stage.skinned[data-kit=meso] .pn.kd>.kd-t{height:51px;margin:0 -6px -14px;background:${fanSvg(false)} 0 100% no-repeat,${fanSvg(true)} 100% 100% no-repeat;transform-origin:50% 100%;animation:fin .8s .15s both,xFan 3.600s ease-in-out infinite alternate}
 @keyframes xFan{from{transform:skewX(-2deg)}to{transform:skewX(2.500deg)}}

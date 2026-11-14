@@ -157,10 +157,12 @@ ${boss(-10, -12, .5)}${boss(410, -12, .56)}${boss(-10, 232, .62)}${boss(410, 232
 
 const svgUrl = (s) => `url("data:image/svg+xml;utf8,${s.replace(/#/g, '%23').replace(/\n\s*/g, '')}")`;
 // static copies of the tile for CSS (data URLs cannot read CSS variables: the stars use a warm glaze)
-const tileSvg = (s, star) => { const c = s * .2929; return `<svg xmlns='http://www.w3.org/2000/svg' width='${s}' height='${s}'><rect width='${s}' height='${s}' fill='#123f86'/>
+const tileSvg = (s, star, bg = '#123f86') => { const c = s * .2929; return `<svg xmlns='http://www.w3.org/2000/svg' width='${s}' height='${s}'><rect width='${s}' height='${s}' fill='${bg}'/>
   <path d='${oct(s / 2, s / 2, s / 2)}' fill='#0b2a5e' stroke='#f3ead6' stroke-width='.7'/>${[[0, 0], [s, 0], [0, s], [s, s]].map(([a, b]) => `<path d='${dia(a, b, c)}' fill='#2aa6b8' stroke='#f3ead6' stroke-width='.7'/>`).join('')}
   <path d='${star8(s / 2, s / 2, s * .37)}' fill='${star}' stroke='#fff6e0' stroke-width='.55'/></svg>`; };
 const TILE = svgUrl(tileSvg(24, '#e9c46a'));
+// panels: same tile without its solid ground, so the game shows through (Glass slider, Paul 2026-11-14)
+const TILE_P = svgUrl(tileSvg(24, '#e9c46a', 'none').replace(/(<rect[^>]*\/>)/, "$1<g opacity='.35'>").replace('</svg>', '</g></svg>'));
 const EDGE = svgUrl(`<svg xmlns='http://www.w3.org/2000/svg' width='72' height='72'>
   <rect x='4' y='4' width='64' height='64' fill='none' stroke='#2a1a08' stroke-width='8'/><rect x='4' y='4' width='64' height='64' fill='none' stroke='#d8bf8c' stroke-width='5.500'/>
   <path d='M1.800 70V1.800H70' fill='none' stroke='#fff4d8' stroke-opacity='.7' stroke-width='1'/>
@@ -206,8 +208,8 @@ const css = `
 
 /* panels: deep glazed tile behind the text, stucco rim with a cobalt-and-brass line and brass stars, cresting on top, drops below */
 #stage.skinned[data-kit=mideast] .pn.kd:not(.mu){
-  background:linear-gradient(180deg,rgba(6,16,40,.86),rgba(4,10,26,.93)),${TILE} 0 0/24px 24px,#123f86;
-  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),inset 0 0 34px rgba(0,0,0,.5)}
+  background:linear-gradient(180deg,rgba(6,16,40,calc(var(--glass,.55)*1.22)),rgba(4,10,26,calc(var(--glass,.55)*1.32))),${TILE_P} 0 0/24px 24px,rgba(18,63,134,calc(var(--glass,.55)*.35));
+  border-color:rgba(0,0,0,.7);box-shadow:0 22px 44px -18px rgba(0,0,0,calc(var(--glass,.55)*1.28)),inset 0 0 34px rgba(0,0,0,.5)}
 #stage.skinned[data-kit=mideast] .pn.kd::after{inset:-7px;opacity:1;background:none;border:22px solid transparent;border-image:${EDGE} 22 / 22px stretch;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
 #stage.skinned[data-kit=mideast] .pn.kd>.kd-t{height:19px;margin:0 16px -6px;background:${CREST} 0 100%/36px 19px repeat-x;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent)}
