@@ -21,6 +21,9 @@ export const DRESS_CSS = `
 #stage .gob.dk g.body{transform:scale(0) rotate(-28deg)}
 #stage .gob .cos{pointer-events:none}
 #stage .gob .cos.flag svg{overflow:visible}
+#stage .gob .cos.flag .fsw{transform-box:fill-box;transform-origin:50% 0;animation:flagSway 5.5s ease-in-out infinite}
+@keyframes flagSway{0%,100%{transform:rotate(-2.2deg)}50%{transform:rotate(2.2deg)}}
+#stage .cam .plate .cos-civ{font-weight:600;font-size:16px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;margin-left:-1px}
 [data-mod=dress]{z-index:3}
 [data-mod=dress][data-phase=off]{visibility:hidden}
 [data-mod=dress][data-phase=off] *{animation-play-state:paused !important}
@@ -94,21 +97,32 @@ function spawn(host, specs, seed) {
   }
 }
 
-// Simple style: a flag pole planted beside the mascot's right paw (mascot units, viewBox 0 0 140 96), the civ's
-// pennant on a short yard at its top. It lives inside g.body, so it hops, walks and perches with the mascot.
-export const FLAG = { x: 116, top: -58, scale: 0.8 };
-export function flagMarkup(civ) {
-  if (!civ || !civ.pennant) return '';
-  const { x, top, scale } = FLAG;
-  const yard = `M${x - 3} ${top + 6}h${34 * scale + 6}`;
+// Simple style: a flag pole planted beside the mascot's right paw (mascot units, viewBox 0 0 140 96). On a short
+// yard at its top hangs a dark banner with the civ's emblem from the game (emblem = image url), or, without a url
+// (or when the image fails to load), the civ's own drawn pennant. It lives inside g.body, so it hops, walks and
+// perches with the mascot.
+export const FLAG = { x: 116, top: -58, scale: 0.8, w: 48, h: 56, emblem: 42 };
+export function flagMarkup(civ, emblem) {
+  if (!civ || !(emblem || civ.pennant)) return '';
+  const { x, top, scale, w, h, emblem: e } = FLAG;
+  const yard = `M${x - 3} ${top + 6}h${(emblem ? w : 34 * scale) + 6}`;
+  const cloth = emblem
+    ? `<g transform="translate(${x + 3} ${top + 6})"><g class="fsw">` +
+      `<path d="M0 0H${w}V${h}L${w * 0.75} ${h + 8}L${w / 2} ${h}L${w / 4} ${h + 8}L0 ${h}Z" fill="#12160d" stroke="var(--civ,#a8ff1f)" stroke-width="1.4" stroke-linejoin="round"/>` +
+      `<path d="M0 0H${w}V5H0Z" fill="var(--civ3,#3a3a3a)"/>` +
+      `<image class="femb" href="${emblem}" x="${(w - e) / 2}" y="9" width="${e}" height="${e}" preserveAspectRatio="xMidYMid meet"/></g></g>`
+    : `<g transform="translate(${x + 2.5} ${top + 4}) scale(${scale})">${civ.pennant}</g>`;
   return `<g class="pole"><path d="M${x} 95V${top}" stroke="#150d06" stroke-width="4.4" stroke-linecap="round"/>` +
     `<path d="M${x} 94.5V${top + 0.5}" stroke="#7a5532" stroke-width="2.6" stroke-linecap="round"/>` +
     `<path d="M${x - 0.7} 93V${top + 2}" stroke="#d2a56c" stroke-width=".7" opacity=".6"/>` +
     `<path d="${yard}" stroke="#150d06" stroke-width="3.6" stroke-linecap="round"/>` +
     `<path d="${yard}" stroke="#7a5532" stroke-width="2" stroke-linecap="round"/>` +
     `<circle cx="${x}" cy="${top - 2}" r="3.2" fill="var(--civm,#e3b55a)" stroke="#150d06" stroke-width="1.1"/></g>` +
-    `<g transform="translate(${x + 2.5} ${top + 4}) scale(${scale})">${civ.pennant}</g>`;
+    cloth;
 }
+
+// Simple style: the camera's name plate reads "SWEDISHGOBLIN of the Vikings" while dressed (Paul 2026-11-15).
+export const plateSuffix = (civ) => (civ && civ.name ? `of the ${civ.name}` : '');
 
 function fill(layer, kit, civ) {
   layer.dataset.phase = 'off';
@@ -166,14 +180,32 @@ export function createDress(stage, layer, kit, civ, opts = {}) {
   }
   function unskin(el) { el.classList.remove('kd', 'kd-in'); el.querySelectorAll(':scope>.kd-t,:scope>.kd-b').forEach((n) => n.remove()); }
 
+  // the cam module's own plate gets one extra span; removed when green again (a cam remount is re-filled by the observer)
+  function plateTag(on) {
+    const p = stage.querySelector('.cam .plate'); if (!p) return;
+    p.querySelectorAll('.cos-civ').forEach((n) => n.remove());
+    const t = on ? plateSuffix(civ) : '';
+    if (!t) return;
+    const s = document.createElement('span'); s.className = 'cos-civ'; s.textContent = t; p.appendChild(s);
+  }
   function costume(on) {
+    if (simple) plateTag(on);
     const g = gob(); if (!g) return;
     const body = g.querySelector('g.body'); if (!body) return;
     body.querySelectorAll('.cos').forEach((n) => n.remove());
     g.classList.toggle('dressed', on);
     if (!on) return;
     const mk = (html, cls) => { const e = document.createElementNS(NS, 'g'); e.setAttribute('class', 'cos ' + cls); e.innerHTML = html; return e; };
-    if (simple) { const f = flagMarkup(civ); if (f) body.insertBefore(mk(f, 'flag'), body.firstChild); }
+    if (simple) {
+      const f = flagMarkup(civ, opts.emblem);
+      if (f) {
+        const fl = mk(f, 'flag');
+        // emblem host down or file missing: fall back to the civ's own drawn pennant
+        const img = fl.querySelector('image');
+        if (img) img.addEventListener('error', () => { fl.innerHTML = flagMarkup(civ); });
+        body.insertBefore(fl, body.firstChild);
+      }
+    }
     if (civ.costume.back) body.insertBefore(mk(civ.costume.back, 'back'), body.firstChild);
     if (civ.costume.front) body.appendChild(mk(civ.costume.front, 'front'));
   }

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { KITS } from '../modules/dress/civs.js';
-import { normCiv, kitOf, timing, pick, createController, styleOf, dressInfo } from '../modules/dress/logic.js';
+import { normCiv, kitOf, timing, pick, createController, styleOf, dressInfo, emblemUrl } from '../modules/dress/logic.js';
 import { DEFAULTS } from '../core/settings.js';
 
 const civIds = KITS.flatMap((k) => k[3].map(([id]) => id));
@@ -94,6 +94,31 @@ test('flagMarkup: a pole with the civ pennant for the mascot, for every civ', as
     assert.match(f, /class="pole"/, id);
   }
   assert.equal(flagMarkup({}), '');
+});
+
+test('emblemUrl: the game civ emblem for each of the 56 ids (aoe2companion CDN; maya is filed as mayans)', () => {
+  const B = 'https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/';
+  assert.equal(emblemUrl('vikings'), B + 'vikings.png');
+  assert.equal(emblemUrl('maya'), B + 'mayans.png');
+  assert.equal(emblemUrl('nope'), null);
+  assert.equal(emblemUrl(''), null);
+  for (const id of civIds) assert.match(emblemUrl(id), /^https:[/][/]backend[.]cdn[.]aoe2companion[.]com[/].+[.]png$/, id);
+});
+
+test('flagMarkup with an emblem url: banner with the game emblem on the pole, no own pennant', async () => {
+  const { flagMarkup } = await import('../modules/dress/stage.js');
+  const civ = (await import('../modules/dress/civ-vikings.js')).default;
+  const f = flagMarkup(civ, emblemUrl('vikings'));
+  assert.match(f, /class="pole"/);
+  assert.ok(f.includes(`<image class="femb" href="${emblemUrl('vikings')}"`));
+  assert.ok(!f.includes(civ.pennant));
+});
+
+test('plateSuffix: the webcam plate reads SWEDISHGOBLIN of the <civ> while dressed (simple)', async () => {
+  const { plateSuffix } = await import('../modules/dress/stage.js');
+  assert.equal(plateSuffix({ name: 'Vikings' }), 'of the Vikings');
+  assert.equal(plateSuffix({}), '');
+  assert.equal(plateSuffix(null), '');
 });
 
 // ---------- controller: fake timers, fake apply ----------

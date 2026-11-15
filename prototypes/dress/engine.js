@@ -9,6 +9,7 @@
 import { createSettings } from '../../core/settings.js';
 import { KITS } from '../../modules/dress/civs.js';
 import { createDress } from '../../modules/dress/stage.js';
+import { emblemUrl } from '../../modules/dress/logic.js';
 
 
 // ---------- harness: real modules, fake data ----------
@@ -138,7 +139,7 @@ export async function boot({ kit, civ }) {
   layer.dataset.mod = 'dress';
   stage.appendChild(layer);
   // ?style=simple shows the live default (mascot costume + flag only); without it the page shows Full
-  const dress = createDress(stage, layer, kit, civ, { style: new URLSearchParams(location.search).get('style') === 'simple' ? 'simple' : 'full' });
+  const dress = createDress(stage, layer, kit, civ, { style: new URLSearchParams(location.search).get('style') === 'simple' ? 'simple' : 'full', emblem: emblemUrl(civ.id) });
   controls(dress, civ);
   window.DRESS = dress; // for checks from the console
 }

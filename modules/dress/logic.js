@@ -18,6 +18,12 @@ export const kitOf = (id) => KIT_OF.get(id) || null;
 // 'full' = the whole overlay (camera frame, panel skins, standard, colours, particles). Anything else = simple.
 export const styleOf = (cfg) => (cfg && cfg.style === 'full' ? 'full' : 'simple');
 
+// The civ's emblem as the game shows it (Paul 2026-11-15: flags like the game ones). Served by aoe2companion's CDN,
+// the same host the match data's civImageUrl points at; all 56 ids answered 200 on 2026-11-15 (maya as mayans).
+const EMBLEM_BASE = 'https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/';
+const EMBLEM_FILE = { maya: 'mayans' };
+export const emblemUrl = (id) => (KIT_OF.has(id) ? `${EMBLEM_BASE}${EMBLEM_FILE[id] || id}.png` : null);
+
 // What the bus 'dress' event carries: the civ colours travel only in full (music waves follow them).
 export function dressInfo(civ, style) {
   return style === 'full' ? { phase: 'on', style, accent: civ.accent, accent2: civ.accent2 } : { phase: 'on', style: 'simple' };

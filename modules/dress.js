@@ -3,7 +3,7 @@
 // then returns to toxic green. Drawings: modules/dress/kit-*.js + civ-*.js.
 // When: modules/dress/logic.js (Paul 2026-11-14: in after the VS card, out after the result banner).
 // Emits bus 'dress' { phase: 'on' | 'off', style?, accent?, accent2? } (music waves follow the accents: full only).
-import { createController, kitOf, styleOf, dressInfo } from './dress/logic.js';
+import { createController, kitOf, styleOf, dressInfo, emblemUrl } from './dress/logic.js';
 import { createDress, OUT_MS } from './dress/stage.js';
 
 export function mount(root, ctx = {}) {
@@ -26,7 +26,7 @@ export function mount(root, ctx = {}) {
     try {
       const [kit, civ] = await Promise.all([import(`./dress/kit-${kitOf(id)}.js`), import(`./dress/civ-${id}.js`)]);
       if (dead || my !== seq) return;
-      dress = createDress(stage, root, kit.default, civ.default, { style });
+      dress = createDress(stage, root, kit.default, civ.default, { style, emblem: emblemUrl(id) });
       dress.info = dressInfo(civ.default, style);
       dress.on(instant);
       if (bus) bus.emit('dress', dress.info);
