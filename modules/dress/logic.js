@@ -14,6 +14,15 @@ export function normCiv(name) {
 
 export const kitOf = (id) => KIT_OF.get(id) || null;
 
+// Goblin 2026-11-15: 'simple' = only the mascot dresses (costume + a flag), the overlay stays green.
+// 'full' = the whole overlay (camera frame, panel skins, standard, colours, particles). Anything else = simple.
+export const styleOf = (cfg) => (cfg && cfg.style === 'full' ? 'full' : 'simple');
+
+// What the bus 'dress' event carries: the civ colours travel only in full (music waves follow them).
+export function dressInfo(civ, style) {
+  return style === 'full' ? { phase: 'on', style, accent: civ.accent, accent2: civ.accent2 } : { phase: 'on', style: 'simple' };
+}
+
 // Q1 A (Paul 2026-11-14): dress when the VS intro card leaves, green when the result banner leaves.
 export function timing(s) {
   const m = (s && s.modules) || {};

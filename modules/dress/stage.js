@@ -2,6 +2,8 @@
 // (modules/dress.js) and the prototype pages (prototypes/dress/engine.js).
 // It never edits the other modules' code: it fills its own layer, then adds classes/children on what they rendered
 // (.pn panels get the kit skin, the mascot .gob gets a costume inside g.body).
+// opts.style 'simple' (Goblin 2026-11-15): only the mascot changes - costume + a flag pole with the civ pennant;
+// no frame, no panel skins, no colours, no particles; the camera frame and its name plate stay as they are.
 
 export const CAM = { x: 24, y: 640, w: 400, h: 225 };
 
@@ -18,6 +20,7 @@ export const DRESS_CSS = `
 #stage .gob g.body{transition:transform .32s cubic-bezier(.5,0,.8,.3)}
 #stage .gob.dk g.body{transform:scale(0) rotate(-28deg)}
 #stage .gob .cos{pointer-events:none}
+#stage .gob .cos.flag svg{overflow:visible}
 [data-mod=dress]{z-index:3}
 [data-mod=dress][data-phase=off]{visibility:hidden}
 [data-mod=dress][data-phase=off] *{animation-play-state:paused !important}
@@ -91,6 +94,22 @@ function spawn(host, specs, seed) {
   }
 }
 
+// Simple style: a flag pole planted beside the mascot's right paw (mascot units, viewBox 0 0 140 96), the civ's
+// pennant on a short yard at its top. It lives inside g.body, so it hops, walks and perches with the mascot.
+export const FLAG = { x: 116, top: -58, scale: 0.8 };
+export function flagMarkup(civ) {
+  if (!civ || !civ.pennant) return '';
+  const { x, top, scale } = FLAG;
+  const yard = `M${x - 3} ${top + 6}h${34 * scale + 6}`;
+  return `<g class="pole"><path d="M${x} 95V${top}" stroke="#150d06" stroke-width="4.4" stroke-linecap="round"/>` +
+    `<path d="M${x} 94.5V${top + 0.5}" stroke="#7a5532" stroke-width="2.6" stroke-linecap="round"/>` +
+    `<path d="M${x - 0.7} 93V${top + 2}" stroke="#d2a56c" stroke-width=".7" opacity=".6"/>` +
+    `<path d="${yard}" stroke="#150d06" stroke-width="3.6" stroke-linecap="round"/>` +
+    `<path d="${yard}" stroke="#7a5532" stroke-width="2" stroke-linecap="round"/>` +
+    `<circle cx="${x}" cy="${top - 2}" r="3.2" fill="var(--civm,#e3b55a)" stroke="#150d06" stroke-width="1.1"/></g>` +
+    `<g transform="translate(${x + 2.5} ${top + 4}) scale(${scale})">${civ.pennant}</g>`;
+}
+
 function fill(layer, kit, civ) {
   layer.dataset.phase = 'off';
   layer.innerHTML = `
@@ -115,23 +134,27 @@ function generalCss() {
 }
 
 // stage = #stage (the modules' parent); layer = an element with data-mod="dress" inside it.
-export function createDress(stage, layer, kit, civ) {
+export function createDress(stage, layer, kit, civ, opts = {}) {
+  const simple = opts.style === 'simple';
   generalCss();
   const own = []; // kit/civ style + font nodes, removed by destroy()
-  for (const css of [kit.css, civ.css]) { if (css) { const st = document.createElement('style'); st.dataset.dress = kit.id; st.textContent = css; document.head.appendChild(st); own.push(st); } }
-  if (kit.fontUrl) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = kit.fontUrl; document.head.appendChild(l); own.push(l); }
-  fill(layer, kit, civ);
-  spawn(layer.querySelector('.dfx.amb'), kit.particles, 7);
+  for (const css of simple ? [civ.css] : [kit.css, civ.css]) { if (css) { const st = document.createElement('style'); st.dataset.dress = kit.id; st.textContent = css; document.head.appendChild(st); own.push(st); } }
+  if (kit.fontUrl && !simple) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = kit.fontUrl; document.head.appendChild(l); own.push(l); }
+  if (simple) { layer.dataset.phase = 'off'; layer.textContent = ''; }
+  else { fill(layer, kit, civ); spawn(layer.querySelector('.dfx.amb'), kit.particles, 7); }
   const NS = 'http://www.w3.org/2000/svg';
   const gob = () => stage.querySelector('.gob');
   let timers = [], phase = 'off', keep = false; // keep: re-apply skin + costume to what the modules re-render
   const later = (ms, fn) => timers.push(setTimeout(fn, ms));
   const clear = () => { timers.forEach(clearTimeout); timers = []; };
-  const setPhase = (p) => { phase = p; layer.dataset.phase = p; stage.dataset.dress = p; };
+  // simple never sets #stage[data-dress]: that attribute hides the camera frame and lifts the perch
+  const setPhase = (p) => { phase = p; layer.dataset.phase = p; if (!simple) stage.dataset.dress = p; };
 
-  const vars = { '--civ': civ.accent, '--civ2': civ.accent2, '--civ3': civ.cloth || civ.accent2, '--civm': civ.metal || '#e3b55a', '--perch': (kit.perch || 0) + 'px' };
+  const vars = { '--civ': civ.accent, '--civ2': civ.accent2, '--civ3': civ.cloth || civ.accent2, '--civm': civ.metal || '#e3b55a' };
+  if (!simple) vars['--perch'] = (kit.perch || 0) + 'px';
   for (const [k, v] of Object.entries(vars)) stage.style.setProperty(k, v);
-  stage.dataset.kit = kit.id; stage.dataset.civ = civ.id;
+  if (!simple) stage.dataset.kit = kit.id;
+  stage.dataset.civ = civ.id;
 
   const panels = () => [...stage.querySelectorAll('.pn')];
   const dist = (el) => { const b = el.getBoundingClientRect(), s = stage.getBoundingClientRect(); const k = 1920 / (s.width || 1920);
@@ -150,6 +173,7 @@ export function createDress(stage, layer, kit, civ) {
     g.classList.toggle('dressed', on);
     if (!on) return;
     const mk = (html, cls) => { const e = document.createElementNS(NS, 'g'); e.setAttribute('class', 'cos ' + cls); e.innerHTML = html; return e; };
+    if (simple) { const f = flagMarkup(civ); if (f) body.insertBefore(mk(f, 'flag'), body.firstChild); }
     if (civ.costume.back) body.insertBefore(mk(civ.costume.back, 'back'), body.firstChild);
     if (civ.costume.front) body.appendChild(mk(civ.costume.front, 'front'));
   }
@@ -157,6 +181,7 @@ export function createDress(stage, layer, kit, civ) {
   // the pennant hangs from the match bar's bottom-left corner, whatever its size (1v1 / 2v2 / 4v4); hidden without a bar
   const pen = layer.querySelector('.dpen');
   function placePen() {
+    if (!pen) return;
     const mb = stage.querySelector('.mb');
     const on = mb && mb.style.display !== 'none' && mb.offsetHeight > 0;
     pen.style.visibility = on ? '' : 'hidden';
@@ -166,7 +191,7 @@ export function createDress(stage, layer, kit, civ) {
   const mo = new MutationObserver(() => {
     placePen();
     if (!keep) return;
-    panels().forEach((p) => { if (!p.classList.contains('kd')) skin(p, false); });
+    if (!simple) panels().forEach((p) => { if (!p.classList.contains('kd')) skin(p, false); });
     const g = gob(); if (g && !g.querySelector('.cos')) costume(true);
   });
   mo.observe(stage, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
@@ -181,8 +206,25 @@ export function createDress(stage, layer, kit, civ) {
     later(3200, () => { host.textContent = ''; });
   }
 
+  // simple: the mascot ducks, comes back dressed with its flag and hops; nothing else moves
+  function onSimple(instant) {
+    if (instant) { keep = true; setPhase('on'); costume(true); return; }
+    setPhase('in'); dk(true);
+    later(360, () => { costume(true); keep = true; });
+    later(460, () => { dk(false); hop(); });
+    later(1400, () => setPhase('on'));
+  }
+  function offSimple(instant) {
+    if (instant || phase === 'off') { setPhase('off'); costume(false); dk(false); return; }
+    setPhase('out'); dk(true);
+    later(360, () => costume(false));
+    later(460, () => { dk(false); hop(); });
+    later(1400, () => setPhase('off'));
+  }
+
   function on(instant) {
     clear();
+    if (simple) return onSimple(instant);
     if (instant) { keep = true; setPhase('on'); stage.classList.add('skinned', 'accent'); panels().forEach((p) => skin(p, false)); costume(true); return; }
     setPhase('in');
     dk(true);
@@ -199,6 +241,7 @@ export function createDress(stage, layer, kit, civ) {
   }
   function off(instant) {
     clear(); keep = false;
+    if (simple) return offSimple(instant);
     if (instant || phase === 'off') { setPhase('off'); stage.classList.remove('skinned', 'accent'); panels().forEach(unskin); costume(false); dk(false); return; }
     setPhase('out');
     dk(true);

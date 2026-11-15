@@ -9,7 +9,8 @@ export const DEFAULTS = {
     series: { enabled: true, mode: 'bestof', bestOf: 3, total: 100, opponentId: null, since: null, manual: { me: 0, opp: 0 } },
     intro: { enabled: true, seconds: 3.5 }, result: { enabled: true }, civdelay: { enabled: true, minutes: 3 },
     // Dressed for War: the overlay wears Goblin's civ during a match. preview = civ id set from the panel (held until Green or the next match).
-    dress: { enabled: true, preview: '', previewAt: 0 },
+    // style: 'simple' = mascot costume + flag only (default, Goblin 2026-11-15), 'full' = the whole overlay dresses.
+    dress: { enabled: true, style: 'simple', preview: '', previewAt: 0 },
     // alerts start off: until the Streamlabs socket (T9) is wired, Goblin's own Streamlabs alerts cover them.
     goal: { enabled: true, title: 'Goblin goal', current: 0, target: 100, source: 'manual' },
     // schedule 'every': shown everyMin minutes (wall clock :00/:20/:40), perTierSec per tier, `rounds` times, then the music widget gets the strip.

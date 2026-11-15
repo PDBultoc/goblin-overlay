@@ -1,14 +1,16 @@
-// dress: "Dressed for War" — during a match the overlay wears Goblin's civ (kit frame, panel skin, standard,
-// pennant, mascot costume), then returns to toxic green. Drawings: modules/dress/kit-*.js + civ-*.js.
+// dress: "Dressed for War" — during a match the mascot wears Goblin's civ (costume + a flag; style 'simple',
+// the default) or the whole overlay does (kit frame, panel skin, standard, pennant, colours; style 'full'),
+// then returns to toxic green. Drawings: modules/dress/kit-*.js + civ-*.js.
 // When: modules/dress/logic.js (Paul 2026-11-14: in after the VS card, out after the result banner).
-// Emits bus 'dress' { phase: 'on' | 'off', accent?, accent2? } (music waves follow it).
-import { createController, kitOf } from './dress/logic.js';
+// Emits bus 'dress' { phase: 'on' | 'off', style?, accent?, accent2? } (music waves follow the accents: full only).
+import { createController, kitOf, styleOf, dressInfo } from './dress/logic.js';
 import { createDress, OUT_MS } from './dress/stage.js';
 
 export function mount(root, ctx = {}) {
   const { bus, settings } = ctx;
   const stage = root.parentElement || root;
   let dress = null, seq = 0, dead = false;
+  const style = styleOf(ctx.cfg);
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
   async function apply(id, instant) {
@@ -24,8 +26,8 @@ export function mount(root, ctx = {}) {
     try {
       const [kit, civ] = await Promise.all([import(`./dress/kit-${kitOf(id)}.js`), import(`./dress/civ-${id}.js`)]);
       if (dead || my !== seq) return;
-      dress = createDress(stage, root, kit.default, civ.default);
-      dress.info = { phase: 'on', accent: civ.default.accent, accent2: civ.default.accent2 };
+      dress = createDress(stage, root, kit.default, civ.default, { style });
+      dress.info = dressInfo(civ.default, style);
       dress.on(instant);
       if (bus) bus.emit('dress', dress.info);
     } catch (e) { console.error('dress', id, e); }

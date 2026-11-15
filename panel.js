@@ -138,8 +138,16 @@ function boot() {
     };
     refreshers.push(show); show();
     const put = (preview) => write('modules.dress', { ...(getp('modules.dress') || {}), preview, previewAt: Date.now() });
+    // Simple = only the mascot dresses (costume + flag); Full = the whole overlay. Missing in old settings = simple.
+    const style = el('select', { 'aria-label': 'Style', onchange: () => write('modules.dress', { ...(getp('modules.dress') || {}), style: style.value }) }, [
+      el('option', { value: 'simple', text: 'Simple: mascot costume + flag' }),
+      el('option', { value: 'full', text: 'Full: the whole overlay dresses' }),
+    ]);
+    const showStyle = () => { if (document.activeElement !== style) style.value = getp('modules.dress.style') === 'full' ? 'full' : 'simple'; };
+    refreshers.push(showStyle); showStyle();
     return [
-      el('div', { class: 'note', text: "During a match the overlay wears Goblin's civ, then turns green again." }),
+      el('div', { class: 'note', text: "During a match the mascot wears Goblin's civ, then turns green again." }),
+      el('div', { class: 'row' }, [el('label', { text: 'Style' }), style]),
       el('div', { class: 'row' }, [el('label', { text: 'Preview civ' }), sel]),
       el('div', { class: 'row' }, [
         el('button', { type: 'button', text: 'Dress', onclick: () => put(sel.value) }),

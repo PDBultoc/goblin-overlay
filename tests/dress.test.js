@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { KITS } from '../modules/dress/civs.js';
-import { normCiv, kitOf, timing, pick, createController } from '../modules/dress/logic.js';
+import { normCiv, kitOf, timing, pick, createController, styleOf, dressInfo } from '../modules/dress/logic.js';
 import { DEFAULTS } from '../core/settings.js';
 
 const civIds = KITS.flatMap((k) => k[3].map(([id]) => id));
@@ -64,8 +64,36 @@ test('pick: running match wins; preview holds until a match starts after it', ()
   assert.equal(pick({ match: null, cfg: {} }), null);
 });
 
-test('DEFAULTS: dress on, no preview', () => {
-  assert.deepEqual(DEFAULTS.modules.dress, { enabled: true, preview: '', previewAt: 0 });
+test('DEFAULTS: dress on, simple style, no preview', () => {
+  assert.deepEqual(DEFAULTS.modules.dress, { enabled: true, style: 'simple', preview: '', previewAt: 0 });
+});
+
+// ---------- style: Simple (mascot costume + flag) / Full (the whole overlay), Goblin 2026-11-15 ----------
+test('styleOf: simple unless the panel says full (old saved settings have no style)', () => {
+  assert.equal(styleOf(undefined), 'simple');
+  assert.equal(styleOf({}), 'simple');
+  assert.equal(styleOf({ style: 'simple' }), 'simple');
+  assert.equal(styleOf({ style: 'full' }), 'full');
+  assert.equal(styleOf({ style: 'FULL' }), 'simple');
+});
+
+test('dressInfo: full sends the civ colours to the music waves, simple keeps them green', async () => {
+  const civ = { accent: '#7fd4ff', accent2: '#b3261e' };
+  assert.deepEqual(dressInfo(civ, 'full'), { phase: 'on', style: 'full', accent: '#7fd4ff', accent2: '#b3261e' });
+  assert.deepEqual(dressInfo(civ, 'simple'), { phase: 'on', style: 'simple' });
+  const { waveColours } = await import('../modules/music.js');
+  assert.deepEqual(waveColours(dressInfo(civ, 'simple')), waveColours({ phase: 'off' }));
+});
+
+test('flagMarkup: a pole with the civ pennant for the mascot, for every civ', async () => {
+  const { flagMarkup } = await import('../modules/dress/stage.js');
+  for (const id of civIds) {
+    const civ = (await import(`../modules/dress/civ-${id}.js`)).default;
+    const f = flagMarkup(civ);
+    assert.ok(f.includes(civ.pennant), id + ': pennant inside the flag');
+    assert.match(f, /class="pole"/, id);
+  }
+  assert.equal(flagMarkup({}), '');
 });
 
 // ---------- controller: fake timers, fake apply ----------

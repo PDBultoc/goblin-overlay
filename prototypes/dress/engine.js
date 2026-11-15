@@ -137,7 +137,8 @@ export async function boot({ kit, civ }) {
   const layer = document.createElement('div');
   layer.dataset.mod = 'dress';
   stage.appendChild(layer);
-  const dress = createDress(stage, layer, kit, civ);
+  // ?style=simple shows the live default (mascot costume + flag only); without it the page shows Full
+  const dress = createDress(stage, layer, kit, civ, { style: new URLSearchParams(location.search).get('style') === 'simple' ? 'simple' : 'full' });
   controls(dress, civ);
   window.DRESS = dress; // for checks from the console
 }
